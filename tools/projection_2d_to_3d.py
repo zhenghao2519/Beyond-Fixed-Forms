@@ -92,6 +92,8 @@ if __name__ == "__main__":
     # 2d sam masks
     annotated_frame, segmented_frame_masks = inference_grounded_sam()
     pred_masks = segmented_frame_masks.squeeze(dim=1).numpy()  # (M, H, W)
+    # TODO: INFERENCE PERFORMED IN SEGMENTATION_2D.PY, READ DIRECTLY 
+
     print(pred_masks.shape, pred_masks.sum(axis=(1,2)), pred_masks.max())
 
     # map 3d pointclouds to 2d
