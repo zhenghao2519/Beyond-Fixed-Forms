@@ -10,7 +10,7 @@ sys.path.append('/home/jie_zhenghao/Beyond-Fixed-Forms/tools')
 from segmentation_2d import inference_grounded_sam
 
 def compute_projected_pts(pts, cam_intr):
-    # map 3d pointclouds to 2d
+    # map 3d pointclouds in camera coordinates system to 2d
     N = pts.shape[0]
     projected_pts = np.empty((N, 2), dtype=np.int64)
     fx, fy = cam_intr[0, 0], cam_intr[1, 1]
@@ -90,7 +90,9 @@ if __name__ == "__main__":
 
 
     # 2d sam masks
-    annotated_frame, segmented_frame_masks = inference_grounded_sam()
+    image_path = '../data/Scannet200/Scannet200_2D_5interval/val/scene0435_00/color/738.jpg' #"assets/demo9.jpg" 738
+    base_prompt = "Clothes, Pillow, Chair, Sofa, Bed, Desk, Monitor, Television, Book"
+    annotated_frame, detected_boxes, segmented_frame_masks = inference_grounded_sam(image_path, base_prompt)
     pred_masks = segmented_frame_masks.squeeze(dim=1).numpy()  # (M, H, W)
     print(pred_masks.shape, pred_masks.sum(axis=(1,2)), pred_masks.max())
 

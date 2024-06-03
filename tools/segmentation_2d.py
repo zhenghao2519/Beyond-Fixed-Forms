@@ -90,20 +90,32 @@ def segment(image, sam_model, boxes):
 
 #     return np.array(Image.alpha_composite(annotated_frame_pil, mask_image_pil))
 
-def inference_grounded_sam():
+def inference_grounded_sam(image_path, base_prompt):
+    """ Inference using Grounding DINO and SAM
+
+    Args:
+        image_path (_type_): path of the image
+        base_prompt (_type_): text query
+
+    Returns:
+        annotated_frame: frame with detected boxes from grounding DINO
+        detected_boxes: detected boxes from grounding DINO
+        segmented_frame_masks: masks from SAM
+    """
+    
     groundingdino_model, sam_predictor = load_grounded_sam()
     print("Loaded models")
 
     # Load image
-    local_image_path = '../data/Scannet200/Scannet200_2D_5interval/val/scene0435_00/color/738.jpg' #"assets/demo9.jpg" 738
-    image_source, image = load_image(local_image_path)
+    # image_path = '../data/Scannet200/Scannet200_2D_5interval/val/scene0435_00/color/738.jpg' #"assets/demo9.jpg" 738
+    image_source, image = load_image(image_path)
 
     # Predict grounding
-    base_prompt = "Clothes, Pillow, Chair, Sofa, Bed, Desk, Monitor, Television, Book"
+    # base_prompt = "Clothes, Pillow, Chair, Sofa, Bed, Desk, Monitor, Television, Book"
     annotated_frame, detected_boxes = detect(image, text_prompt=base_prompt, model=groundingdino_model.to(device))
 
     # Predict segmentation
     segmented_frame_masks = segment(image_source, sam_predictor, boxes=detected_boxes)
 
-    return annotated_frame, segmented_frame_masks
+    return annotated_frame, detected_boxes, segmented_frame_masks
     
