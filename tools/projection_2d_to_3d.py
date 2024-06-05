@@ -1,16 +1,22 @@
 import numpy as np
 import open3d as o3d
 import cv2
+import yaml
+
 import matplotlib.pyplot as plt
 import copy
 import torch
+import os
+import argparse
 
 import sys
 sys.path.append('/home/jie_zhenghao/Beyond-Fixed-Forms/tools')
 from segmentation_2d import inference_grounded_sam
+from configs import config as cfg
+from munch import Munch
 
 def compute_projected_pts(pts, cam_intr):
-    # map 3d pointclouds to 2d
+    # map 3d pointclouds in camera coordinates system to 2d
     N = pts.shape[0]
     projected_pts = np.empty((N, 2), dtype=np.int64)
     fx, fy = cam_intr[0, 0], cam_intr[1, 1]
@@ -58,9 +64,40 @@ def compute_visible_masked_pts(scene_pts, projected_pts, visibility_mask, pred_m
                 masked_pts[m, i] = True
     return masked_pts
 
+def rle_decode(rle):
+    """
+    Decode rle to get binary mask.
+    Args:
+        rle (dict): rle of encoded mask
+    Returns:
+        mask (np.ndarray): decoded mask
+    """
+    length = rle["length"]
+    try:
+        s = rle["counts"].split()
+    except:
+        s = rle["counts"]
+
+    starts, nums = [np.asarray(x, dtype=np.int32) for x in (s[0:][::2], s[1:][::2])]
+    starts -= 1
+    ends = starts + nums
+    mask = np.zeros(length, dtype=np.uint8)
+    for lo, hi in zip(starts, ends):
+        mask[lo:hi] = 1
+    return mask
+
+def get_parser():
+    parser = argparse.ArgumentParser(description="Configuration Open3DIS")
+    parser.add_argument("--config",type=str,required = True,help="Config")
+    return parser
 
 if __name__ == "__main__":
-
+    
+    args = get_parser().parse_args()
+    cfg = Munch.fromDict(yaml.safe_load(open(args.config, "r").read()))
+    scene_id = cfg.scene_id
+    mask_2d_dir = cfg.mask_2d_dir
+    cam_pose_dir = cfg.cam_pose_dir
     device = torch.device('cuda' if torch.cuda.is_available() 
                           else 'mps' if torch.backends.mps.is_available() 
                           else 'cpu')
@@ -85,60 +122,64 @@ if __name__ == "__main__":
 
 
     # load 3d point cloud
-    scene_pcd_path = "/home/jie_zhenghao/Open3DIS/data/Scannet200/Scannet200_3D/val/original_ply_files/scene0435_00.ply"
+    scene_pcd_path = cfg.scene_pcd_path
     scene_pcd = o3d.io.read_point_cloud(str(scene_pcd_path))
 
-
     # 2d sam masks
-    annotated_frame, segmented_frame_masks = inference_grounded_sam()
-    pred_masks = segmented_frame_masks.squeeze(dim=1).numpy()  # (M, H, W)
-    # TODO: INFERENCE PERFORMED IN SEGMENTATION_2D.PY, READ DIRECTLY 
+    # annotated_frame, segmented_frame_masks = inference_grounded_sam()
+    masks_2d_path = os.path.join(mask_2d_dir, f"{scene_id}.pth")
+    gronded_sam_results = torch.load(masks_2d_path) 
 
-    print(pred_masks.shape, pred_masks.sum(axis=(1,2)), pred_masks.max())
+    for i in range(len(gronded_sam_results)):
 
-    # map 3d pointclouds to 2d
-    cam_pose = np.loadtxt("/home/jie_zhenghao/Open3DIS/data/Scannet200/Scannet200_2D_5interval/val/scene0435_00/pose/738.txt")
+        frame_id = gronded_sam_results[i]["frame_id"]
+        segmented_frame_masks = rle_decode(gronded_sam_results[1]["segmented_frame_masks_rle"])    # TODO: HERE IS THE INFERENCE RESULTS OF ALL FRAMES (A DICTIONARY)
 
-    ###!!!!!!!!! TEST IF TRANSFORMED CORRECTLY
-    # coords = torch.from_numpy(np.asarray(scene_pcd.points))
-    # print("shape of coords",coords.shape, coords.max())
-    # coords_new = torch.cat([coords, torch.ones([coords.shape[0], 1], dtype=torch.float, device='cpu')], dim=1).T
-    # print("shape of coords_new",coords_new.shape, coords_new.max())
-    # world_to_camera = torch.linalg.inv(torch.from_numpy(cam_pose))
-    # print("shape of world_to_camera",world_to_camera)
-    # p = world_to_camera.float() @ coords_new.float()
-    # print("shape of p after mult",p.shape, p.max())
-    # cam_intr_t = torch.from_numpy(np.array(
-    #             [[577.870605, 0.0, 319.5], 
-    #              [0.0, 577.870605, 239.5],
-    #              [0.0, 0.0, 1.0]]))
-    # p[0] = (p[0] * cam_intr_t[0][0]) / p[2] + cam_intr_t[0][2]
-    # p[1] = (p[1] * cam_intr_t[1][1]) / p[2] + cam_intr_t[1][2]
-    # # p = p.reshape(-1,4)
-    # print("shape of p final p",p.shape, p[0][0])
+        pred_masks = segmented_frame_masks.squeeze(dim=1).numpy()  # (M, H, W)
+        # print(pred_masks.shape, pred_masks.sum(axis=(1,2)), pred_masks.max())
+        # map 3d pointclouds to 2d
+        cam_pose = np.loadtxt(os.path.join(cam_pose_dir, f"{frame_id}.txt"))
 
+        ###!!!!!!!!! TEST IF TRANSFORMED CORRECTLY
+        # coords = torch.from_numpy(np.asarray(scene_pcd.points))
+        # print("shape of coords",coords.shape, coords.max())
+        # coords_new = torch.cat([coords, torch.ones([coords.shape[0], 1], dtype=torch.float, device='cpu')], dim=1).T
+        # print("shape of coords_new",coords_new.shape, coords_new.max())
+        # world_to_camera = torch.linalg.inv(torch.from_numpy(cam_pose))
+        # print("shape of world_to_camera",world_to_camera)
+        # p = world_to_camera.float() @ coords_new.float()
+        # print("shape of p after mult",p.shape, p.max())
+        # cam_intr_t = torch.from_numpy(np.array(
+        #             [[577.870605, 0.0, 319.5], 
+        #              [0.0, 577.870605, 239.5],
+        #              [0.0, 0.0, 1.0]]))
+        # p[0] = (p[0] * cam_intr_t[0][0]) / p[2] + cam_intr_t[0][2]
+        # p[1] = (p[1] * cam_intr_t[1][1]) / p[2] + cam_intr_t[1][2]
+        # # p = p.reshape(-1,4)
+        # print("shape of p final p",p.shape, p[0][0])
 
+        pcd = copy.deepcopy(scene_pcd).transform(np.linalg.inv(cam_pose)) # world to camera
+        scene_pts = np.asarray(pcd.points)
+        projected_pts = compute_projected_pts(scene_pts, cam_intr)
+        print("projected_pts", projected_pts[:,0].mean(), projected_pts[:,1].mean())
 
-    pcd = copy.deepcopy(scene_pcd).transform(np.linalg.inv(cam_pose)) # world to camera
-    scene_pts = np.asarray(pcd.points)
-    projected_pts = compute_projected_pts(scene_pts, cam_intr)
-    print("projected_pts", projected_pts[:,0].mean(), projected_pts[:,1].mean())
+        depth_im_dir = cfg.depth_dir
+        frame_id_num = frame_id.split('.')[0]
+        depth_im_path = os.path.join(cfg.depth_dir, f"{frame_id_num}.png")
+        depth_im = cv2.imread(depth_im_path, cv2.IMREAD_UNCHANGED).astype(np.float32)/depth_scale
+        print(depth_im.shape)
+        plt.imshow(depth_im, cmap='gray')
+        plt.colorbar(label='Depth (meters)')
+        plt.title('Depth Image Visualization')
+        plt.show()
+        # depth_im = depth_im/depth_scale
+        visibility_mask = compute_visibility_mask(scene_pts, projected_pts, depth_im, depth_thresh=0.8)
+        # visibility_count[visibility_mask] += 1
+        print(depth_im.max())
+        print(visibility_mask.sum())
 
-    depth_im_path = "/home/jie_zhenghao/Open3DIS/data/Scannet200/Scannet200_2D_5interval/val/scene0435_00/depth/738.png"
-    depth_im = cv2.imread(depth_im_path, cv2.IMREAD_UNCHANGED).astype(np.float32)/depth_scale
-    print(depth_im.shape)
-    plt.imshow(depth_im, cmap='gray')
-    plt.colorbar(label='Depth (meters)')
-    plt.title('Depth Image Visualization')
-    plt.show()
-    # depth_im = depth_im/depth_scale
-    visibility_mask = compute_visibility_mask(scene_pts, projected_pts, depth_im, depth_thresh=0.8)
-    # visibility_count[visibility_mask] += 1
-    print(depth_im.max())
-    print(visibility_mask.sum())
-
-    masked_pts = compute_visible_masked_pts(scene_pts, projected_pts, visibility_mask, pred_masks)  # (M, N)
-    masked_pts = torch.from_numpy(masked_pts).to(device)
-    # if ground_indices is not None:
-    #     masked_pts[:, ground_indices] = 0
-    mask_area = torch.sum(masked_pts, dim=1).detach().cpu().numpy()  # (M,)
+        masked_pts = compute_visible_masked_pts(scene_pts, projected_pts, visibility_mask, pred_masks)  # (M, N)
+        masked_pts = torch.from_numpy(masked_pts).to(device)
+        # if ground_indices is not None:
+        #     masked_pts[:, ground_indices] = 0
+        mask_area = torch.sum(masked_pts, dim=1).detach().cpu().numpy()  # (M,)
