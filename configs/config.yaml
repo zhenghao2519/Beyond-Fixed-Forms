@@ -1,0 +1,21 @@
+
+
+# paths
+dataset: 'Scannet200'
+scene_id: 'scene0435_00'
+root_dir: '/home/jie_zhenghao/Open3DIS/data/Scannet200/Scannet200_2D_5interval/val'
+scene_pcd_path: "/home/jie_zhenghao/Open3DIS/data/Scannet200/Scannet200_3D/val/original_ply_files/scene0435_00.ply"
+cam_pose_dir: "/home/jie_zhenghao/Open3DIS/data/Scannet200/Scannet200_2D_5interval/val/scene0435_00/pose/"
+depth_im_dir: "/home/jie_zhenghao/Open3DIS/data/Scannet200/Scannet200_2D_5interval/val/scene0435_00/depth/"
+mask_2d_dir: "../output/mask_2d"
+
+# grounding dino
+ckpt_repo_id: "ShilongLiu/GroundingDINO"
+ckpt_filename: "groundingdino_swinb_cogcoor.pth"
+ckpt_config_filename: "GroundingDINO_SwinB.cfg.py"
+
+# sam
+sam_checkpoint: 'sam_vit_h_4b8939.pth'
+
+# prompt
+base_prompt: "clothes, chair"  #, Pillow, Chair, Sofa, Bed, Desk, Monitor, Television, Book"
