@@ -1,5 +1,6 @@
 data/**
 pretrained/**
-output/*
+output/**
 
+!README.md
 __pycache__

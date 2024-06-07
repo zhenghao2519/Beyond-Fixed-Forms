@@ -3,12 +3,12 @@
 # paths
 dataset: 'Scannet200'
 scene_id: 'scene0435_00'
-root_dir: '/medar_smart/temp/Beyond-Fixed-Forms/data/Scannet200/Scannet200_2D_5interval/val'
+root_dir: 'data/Scannet200/Scannet200_2D_5interval/val'
 # scene_pcd_path: "/home/jie_zhenghao/Open3DIS/data/Scannet200/Scannet200_3D/val/original_ply_files/scene0435_00.ply"
-scene_pcd_path: "/medar_smart/temp/Beyond-Fixed-Forms/data/Scannet200/Scannet200_3D/val/original_npy_files/scene0435_00.npy"
-cam_pose_dir: "/medar_smart/temp/Beyond-Fixed-Forms/data/Scannet200/Scannet200_2D_5interval/val/scene0435_00/pose/"
-depth_im_dir: "/medar_smart/temp/Beyond-Fixed-Forms/data/Scannet200/Scannet200_2D_5interval/val/scene0435_00/depth/"
-mask_2d_dir: "/medar_smart/temp/Beyond-Fixed-Forms/output/mask_2d"
+scene_pcd_path: "data/Scannet200/Scannet200_3D/val/original_npy_files/scene0435_00.npy"
+cam_pose_dir: "data/Scannet200/Scannet200_2D_5interval/val/scene0435_00/pose/"
+depth_im_dir: "data/Scannet200/Scannet200_2D_5interval/val/scene0435_00/depth/"
+mask_2d_dir: "output/mask_2d"
 
 # grounding dino
 ckpt_repo_id: "ShilongLiu/GroundingDINO"
@@ -18,7 +18,7 @@ dino_box_threshold: 0.4
 dino_text_threshold: 0.4
 
 # sam
-sam_checkpoint: '/medar_smart/temp/Beyond-Fixed-Forms/pretrained/sam_vit_h_4b8939.pth'
+sam_checkpoint: 'pretrained/sam_vit_h_4b8939.pth'
 sam_url: 'https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth'
 
 # prompt
