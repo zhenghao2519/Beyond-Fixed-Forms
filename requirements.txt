@@ -1,0 +1,8 @@
+opencv-python==4.7.0.72
+groundingdino_py
+segment-anything_py
+supervision
+huggingface_hub
+
+munch
+configs

@@ -14,9 +14,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # other imports
+from PIL import Image
 import os
 import torch
-import tqdm
+from tqdm import tqdm
 import argparse
 import pycocotools.mask
 import yaml
@@ -24,7 +25,25 @@ import supervision as sv
 from huggingface_hub import hf_hub_download
 from configs import config
 from munch import Munch
+import requests
 
+device = torch.device('cuda' if torch.cuda.is_available() 
+                          else 'mps' if torch.backends.mps.is_available() 
+                          else 'cpu')
+
+def download_file(url, filename):
+    # Send a GET request to the URL
+    response = requests.get(url)
+    
+    # Check if the request was successful
+    if response.status_code == 200:
+        # Open the file in binary write mode and save the content to the file
+        with open(filename, 'wb') as file:
+            file.write(response.content)
+        print(f"File downloaded successfully: {filename}")
+    else:
+        print(f"Failed to download file. Status code: {response.status_code}")
+        
 
 def load_model_hf(repo_id, filename, ckpt_config_filename, device=device):
     cache_config_file = hf_hub_download(repo_id=repo_id, filename=ckpt_config_filename)
@@ -35,6 +54,7 @@ def load_model_hf(repo_id, filename, ckpt_config_filename, device=device):
     model = build_model(args)
     
     cache_file = hf_hub_download(repo_id=repo_id, filename=filename)
+    # print("cache file",cache_file)
     checkpoint = torch.load(cache_file, map_location=device)
     log = model.load_state_dict(clean_state_dict(checkpoint['model']), strict=False)
     print("Model loaded from {} \n => {}".format(cache_file, log))
@@ -44,16 +64,20 @@ def load_model_hf(repo_id, filename, ckpt_config_filename, device=device):
 def load_grounded_sam():
     # load grounding dino
     ckpt_repo_id = cfg.ckpt_repo_id
-    ckpt_filenmae = cfg.ckpt_config_filename
+    ckpt_filename = cfg.ckpt_filename
     ckpt_config_filename = cfg.ckpt_config_filename
-    groundingdino_model = load_model_hf(ckpt_repo_id, ckpt_filenmae, ckpt_config_filename, device)
+    groundingdino_model = load_model_hf(ckpt_repo_id, ckpt_filename, ckpt_config_filename, device)
     # load sam
-    sam_checkpoint = cfg.sam_checkpoint
+    sam_checkpoint = cfg.sam_checkpoint # wget https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth
+    if not os.path.exists(sam_checkpoint):
+        url = cfg.sam_url
+        filename = cfg.sam_checkpoint
+        download_file(url, filename)
     sam_predictor = SamPredictor(build_sam(checkpoint=sam_checkpoint).to(device))
     return groundingdino_model, sam_predictor
 
 # detect object using grounding DINO
-def detect(image_source, image, text_prompt, model, box_threshold = 0.3, text_threshold = 0.3, device = 'cuda'):
+def detect(image_source, image, text_prompt, model, box_threshold = 0.4, text_threshold = 0.4, device = 'cuda'):
   boxes, logits, phrases = predict(
       model=model, 
       image=image, 
@@ -87,20 +111,20 @@ def segment(image, sam_model, boxes):
       print("No masks generated")
   return masks.cpu() if masks is not None else None
 
-# def draw_mask(mask, image, random_color=True):  
-#     if random_color:
-#         color = np.concatenate([np.random.random(3), np.array([0.8])], axis=0)
-#     else:
-#         color = np.array([30/255, 144/255, 255/255, 0.6])
-#     h, w = mask.shape[-2:] 
-#     mask_image = mask.reshape(h, w, 1) * color.reshape(1, 1, -1)
+def draw_mask(mask, image, random_color=True):  
+    if random_color:
+        color = np.concatenate([np.random.random(3), np.array([0.8])], axis=0)
+    else:
+        color = np.array([30/255, 144/255, 255/255, 0.6])
+    h, w = mask.shape[-2:] 
+    mask_image = mask.reshape(h, w, 1) * color.reshape(1, 1, -1)
     
-#     annotated_frame_pil = Image.fromarray(image).convert("RGBA")     #annotated fram in PIL format
-#     mask_image_pil = Image.fromarray((mask_image.cpu().numpy() * 255).astype(np.uint8)).convert("RGBA")
+    annotated_frame_pil = Image.fromarray(image).convert("RGBA")     #annotated fram in PIL format
+    mask_image_pil = Image.fromarray((mask_image.cpu().numpy() * 255).astype(np.uint8)).convert("RGBA")
 
-#     return np.array(Image.alpha_composite(annotated_frame_pil, mask_image_pil))
+    return np.array(Image.alpha_composite(annotated_frame_pil, mask_image_pil))
 
-def inference_grounded_sam(image_paths, base_prompt):
+def inference_grounded_sam(image_paths, base_prompt,  dino_box_threshold, dino_text_threshold, mask_2d_dir, draw=True):
     """ Inference using Grounding DINO and SAM
     Args:
         image_path (_type_): path of the image
@@ -119,17 +143,29 @@ def inference_grounded_sam(image_paths, base_prompt):
         image_source, image = load_image(image_path)
         if image_source is None or image is None:               # skip the image if not loaded
             continue
-        annotated_frame, detected_boxes = detect(image_source, image, text_prompt=base_prompt, model=groundingdino_model.to(device))
+        annotated_frame, detected_boxes = detect(image_source, image, text_prompt=base_prompt, model=groundingdino_model.to(device), box_threshold= dino_box_threshold, text_threshold=dino_text_threshold)
         if detected_boxes is None or len(detected_boxes) == 0:  # skip the image if no boxes detected
             continue
         num_img_with_boxes += 1
         segmented_frame_masks = segment(image_source, sam_predictor, boxes=detected_boxes)
         # annotated_frame_with_mask = draw_mask(segmented_frame_masks[0][0], annotated_frame)
-        segmented_frame_masks_rle = masks_to_rle(segmented_frame_masks)
+        # segmented_frame_masks_rle = masks_to_rle(segmented_frame_masks)
         
+        if draw:
+            annotated_frame_with_mask = annotated_frame
+            for i in range(segmented_frame_masks.shape[0]):
+                annotated_frame_with_mask = draw_mask(segmented_frame_masks[i][0], annotated_frame_with_mask)
+                
+            if not os.path.exists(os.path.join(mask_2d_dir, "vis_masks")):
+                os.makedirs(os.path.join(mask_2d_dir, "vis_masks"))
+            Image.fromarray(annotated_frame_with_mask).save(os.path.join(mask_2d_dir, "vis_masks", frame_id+".png"))
+            
+            
+            
         results.append({
             "frame_id": frame_id, 
-            "segmented_frame_masks_rle": segmented_frame_masks_rle
+            "segmented_frame_masks": segmented_frame_masks # (M, 1, W, H)
+            # "segmented_frame_masks_rle": segmented_frame_masks_rle
             })   # add keys "annotated_frame", "detected_boxes" if needed
         
     print(f'Number of images with at least one box detected: {num_img_with_boxes}')
@@ -140,7 +176,7 @@ def get_parser():
     parser.add_argument("--config", type=str, required=True, help="Config")
     return parser
 
-def masks_to_rle(masks) -> Dict:
+def masks_to_rle(masks) -> dict:
     """
     Encode 2D mask to RLE (save memory and fast)
     """
@@ -161,10 +197,12 @@ if __name__ == "__main__":
     
     args = get_parser().parse_args()
     cfg = Munch.fromDict(yaml.safe_load(open(args.config, "r").read())) # Can run in command line using "python your_script.py --config config.yaml"
-    device = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'
+    device = torch.device('cuda' if torch.cuda.is_available() 
+                          else 'mps' if torch.backends.mps.is_available() 
+                          else 'cpu')
     scene_id = cfg.scene_id
     root_dir = cfg.root_dir
-    image_dir = os.path.join(root_dir, scene_id, "/color")
+    image_dir = os.path.join(root_dir, scene_id, "color")
     text_prompt = cfg.base_prompt
     mask_2d_dir = cfg.mask_2d_dir
 
@@ -174,8 +212,10 @@ if __name__ == "__main__":
     print(f'Number of downsampled_images:{len(downsampled_image_files)}')
     downsampled_images_paths = [os.path.join(image_dir, f) for f in downsampled_image_files]
 
-    with torch.cuda.amp.autocast(enable = True):
-        grounded_sam_results = inference_grounded_sam(downsampled_images_paths, text_prompt)
+    dino_box_threshold = cfg.dino_box_threshold
+    dino_text_threshold = cfg.dino_text_threshold
+    with torch.cuda.amp.autocast():
+        grounded_sam_results = inference_grounded_sam(downsampled_images_paths, text_prompt, dino_box_threshold, dino_text_threshold, mask_2d_dir)
         os.makedirs(mask_2d_dir, exist_ok=True)
         mask_2d_path = os.path.join(mask_2d_dir, f"{scene_id}.pth")
         torch.save(grounded_sam_results, mask_2d_path)   # save all segmented frame masks in a file

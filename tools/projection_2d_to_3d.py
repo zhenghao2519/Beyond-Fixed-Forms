@@ -1,5 +1,5 @@
 import numpy as np
-import open3d as o3d
+# import open3d as o3d
 import cv2
 import yaml
 
@@ -9,11 +9,16 @@ import torch
 import os
 import argparse
 
-import sys
-sys.path.append('/home/jie_zhenghao/Beyond-Fixed-Forms/tools')
-from segmentation_2d import inference_grounded_sam
 from configs import config as cfg
 from munch import Munch
+
+import sys
+sys.path.append('/medar_smart/temp/Beyond-Fixed-Forms/tools')
+from segmentation_2d import inference_grounded_sam
+
+device = torch.device('cuda' if torch.cuda.is_available() 
+                          else 'mps' if torch.backends.mps.is_available() 
+                          else 'cpu')
 
 def compute_projected_pts(pts, cam_intr):
     # map 3d pointclouds in camera coordinates system to 2d
@@ -34,7 +39,7 @@ def compute_visibility_mask(pts, projected_pts, depth_im, depth_thresh=0.005):
     # compare z in camera coordinates and depth image 
     # to check if there projected points are visible
     im_h, im_w = depth_im.shape
-    print(depth_im.shape)
+    # print(depth_im.shape)
     visibility_mask = np.zeros(projected_pts.shape[0]).astype(np.bool8)
     z = pts[:, 2]
     # print("DEBUG z value", z.max(), z.min(),z.mean())
@@ -45,7 +50,7 @@ def compute_visibility_mask(pts, projected_pts, depth_im, depth_thresh=0.005):
             continue
         if depth_im[y, x] == 0:
             continue
-        if np.abs(z - depth_im[y, x]) < depth_thresh:
+        if np.abs(z - depth_im[y, x]) < depth_thresh and z > 0:
             visibility_mask[i] = True
     return visibility_mask
 
@@ -102,8 +107,8 @@ if __name__ == "__main__":
                           else 'mps' if torch.backends.mps.is_available() 
                           else 'cpu')
 
-    N = 254998 # number of 3d points
-    visibility_count = np.zeros((N,), dtype=np.int32)
+    # N = 254998 # number of 3d points
+    # visibility_count = np.zeros((N,), dtype=np.int32)
 
     # load camera configs
     # cam_intr = np.loadtxt("/home/jie_zhenghao/Open3DIS/data/Scannet200/Scannet200_2D_5interval/val/scene0435_00/intrinsic.txt")
@@ -115,25 +120,31 @@ if __name__ == "__main__":
                 [[1170.1, 0.0, 647.7], 
                 [0.0, 1170.187988, 483.750000],
                 [0.0, 0.0, 1.0]])
-    print(cam_intr)
-    print(cam_intr.shape)
+    # print(cam_intr)
+    # print(cam_intr.shape)
     # cam_intr = np.asarray(cam_config['cam_intr'])
     depth_scale = 1000 # not sure, JUST TRYING!
 
 
     # load 3d point cloud
     scene_pcd_path = cfg.scene_pcd_path
-    scene_pcd = o3d.io.read_point_cloud(str(scene_pcd_path))
+    # scene_pcd = o3d.io.read_point_cloud(str(scene_pcd_path))
+    scene_pcd = np.load(scene_pcd_path)[:,:3]
+    scene_pcd = np.concatenate([scene_pcd, torch.ones([scene_pcd.shape[0], 1])], axis=1).T
+    # print("scene_pcd shape:", scene_pcd.shape)
 
     # 2d sam masks
     # annotated_frame, segmented_frame_masks = inference_grounded_sam()
     masks_2d_path = os.path.join(mask_2d_dir, f"{scene_id}.pth")
     gronded_sam_results = torch.load(masks_2d_path) 
 
-    for i in range(len(gronded_sam_results)):
+    all_points_masked = torch.zeros(scene_pcd.shape[1]) # scene_pcd has shape (4, N)
+    for i in range(len(gronded_sam_results)): # range(35,40): 
 
-        frame_id = gronded_sam_results[i]["frame_id"]
-        segmented_frame_masks = rle_decode(gronded_sam_results[1]["segmented_frame_masks_rle"])    # TODO: HERE IS THE INFERENCE RESULTS OF ALL FRAMES (A DICTIONARY)
+        frame_id = gronded_sam_results[i]["frame_id"][:-4]
+        print("-------------------------frame", frame_id, "-------------------------")
+        segmented_frame_masks = gronded_sam_results[i]["segmented_frame_masks"]
+        # segmented_frame_masks = rle_decode(gronded_sam_results[i]["segmented_frame_masks_rle"])    # TODO: HERE IS THE INFERENCE RESULTS OF ALL FRAMES (A DICTIONARY)
 
         pred_masks = segmented_frame_masks.squeeze(dim=1).numpy()  # (M, H, W)
         # print(pred_masks.shape, pred_masks.sum(axis=(1,2)), pred_masks.max())
@@ -158,28 +169,41 @@ if __name__ == "__main__":
         # # p = p.reshape(-1,4)
         # print("shape of p final p",p.shape, p[0][0])
 
-        pcd = copy.deepcopy(scene_pcd).transform(np.linalg.inv(cam_pose)) # world to camera
-        scene_pts = np.asarray(pcd.points)
+        scene_pts = copy.deepcopy(scene_pcd)
+        scene_pts = (np.linalg.inv(cam_pose) @ scene_pts).T[:,:3] # (N, 3)
+        # print(scene_pts.shape, np.max(scene_pts[:,2]), np.min(scene_pts[:,2]))
+        # pcd = copy.deepcopy(pcd).transform(np.linalg.inv(cam_pose)) # world to camera
+        # scene_pts = np.asarray(pcd.points)
         projected_pts = compute_projected_pts(scene_pts, cam_intr)
-        print("projected_pts", projected_pts[:,0].mean(), projected_pts[:,1].mean())
+        # print("projected_pts", projected_pts[:,0].mean(), projected_pts[:,1].mean())
 
-        depth_im_dir = cfg.depth_dir
-        frame_id_num = frame_id.split('.')[0]
-        depth_im_path = os.path.join(cfg.depth_dir, f"{frame_id_num}.png")
+        depth_im_dir = cfg.depth_im_dir
+        # frame_id_num = frame_id.split('.')[0]
+        depth_im_path = os.path.join(cfg.depth_im_dir, f"{frame_id}.png")
         depth_im = cv2.imread(depth_im_path, cv2.IMREAD_UNCHANGED).astype(np.float32)/depth_scale
-        print(depth_im.shape)
-        plt.imshow(depth_im, cmap='gray')
-        plt.colorbar(label='Depth (meters)')
-        plt.title('Depth Image Visualization')
-        plt.show()
-        # depth_im = depth_im/depth_scale
-        visibility_mask = compute_visibility_mask(scene_pts, projected_pts, depth_im, depth_thresh=0.8)
+        depth_im = cv2.resize(depth_im, (1296, 968)) # Width x Height
+        # print("depth image shape:" , depth_im.shape, "mask shape",  pred_masks.shape)
+        # plt.imshow(depth_im, cmap='gray')
+        # plt.colorbar(label='Depth (meters)')
+        # plt.title('Depth Image Visualization')
+        # plt.show()
+        # # depth_im = depth_im/depth_scale
+        visibility_mask = compute_visibility_mask(scene_pts, projected_pts, depth_im, depth_thresh=0.08)
         # visibility_count[visibility_mask] += 1
-        print(depth_im.max())
-        print(visibility_mask.sum())
+        # print(depth_im.max())
+        # print("visibility check result", visibility_mask.sum())
 
         masked_pts = compute_visible_masked_pts(scene_pts, projected_pts, visibility_mask, pred_masks)  # (M, N)
         masked_pts = torch.from_numpy(masked_pts).to(device)
         # if ground_indices is not None:
         #     masked_pts[:, ground_indices] = 0
         mask_area = torch.sum(masked_pts, dim=1).detach().cpu().numpy()  # (M,)
+        print("number of 3d mask points:", mask_area, "number of 2d masks:", pred_masks.sum(axis=(1,2)))
+        
+        for mask in masked_pts:
+            # print("single_mask shape", mask.shape, "all mask shape", all_points_masked.shape)
+            all_points_masked[mask] = 1
+          
+    print("final masked points", all_points_masked.sum())  
+    torch.save({'ins':all_points_masked.unsqueeze(0), 'conf': torch.tensor([0.36]), 'final_class': torch.tensor([30])}, '/medar_smart/temp/Beyond-Fixed-Forms/output/mask_3d/final_all_3d_masks.pth')
+        
