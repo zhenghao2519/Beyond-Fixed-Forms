@@ -1,0 +1,5 @@
+data/**
+pretrained/**
+output/*
+
+__pycache__
