@@ -1,5 +1,5 @@
 # Pretrained Models
-Run segmentation2d.py to automatically download pretrained SAM model
+Run `segmentation2d.py` to automatically download pretrained SAM model
 
 Or manually run
 ```
