@@ -176,22 +176,6 @@ def get_parser():
     parser.add_argument("--config", type=str, required=True, help="Config")
     return parser
 
-def masks_to_rle(masks) -> dict:
-    """
-    Encode 2D mask to RLE (save memory and fast)
-    """
-    res = []
-    if masks == None:
-        return None
-    masks = masks.squeeze(1) # remove batch dimension
-    for mask in masks:
-        if torch.is_tensor(mask):
-            mask = mask.detach().cpu().numpy()
-        assert isinstance(mask, np.ndarray)
-        rle = pycocotools.mask.encode(np.asfortranarray(mask))
-        rle["counts"] = rle["counts"].decode("utf-8")
-        res.append(rle)
-    return res
 
 if __name__ == "__main__":
     
@@ -221,44 +205,3 @@ if __name__ == "__main__":
         torch.save(grounded_sam_results, mask_2d_path)   # save all segmented frame masks in a file
         torch.cuda.empty_cache()
 
-    # # Proces every scene (during evaluation)
-    # with torch.cuda.amp.autocast(enabled=cfg.fp16):
-    #     for scene_id in tqdm(scene_ids):
-    #         # Tracker
-    #         # done = False
-    #         # path = scene_id + ".pth"
-    #         # with open("tracker_2d.txt", "r") as file:
-    #         #     lines = file.readlines()
-    #         #     lines = [line.strip() for line in lines]
-    #         #     for line in lines:
-    #         #         if path in line:
-    #         #             done = True
-    #         #             break
-    #         # if done == True:
-    #         #     print("existed " + path)
-    #         #     continue
-    #         # # Write append each line
-    #         # with open("tracker_2d.txt", "a") as file:
-    #         #     file.write(path + "\n")
-
-    #         # if os.path.exists(os.path.join(save_dir, f"{scene_id}.pth")): 
-    #         #     print(f"Skip {scene_id} as it already exists")
-    #         #     continue
-
-    #         print("Process", scene_id)
-    #         grounded_data_dict, grounded_features = gen_grounded_mask_and_feat(
-    #             scene_id,
-    #             clip_adapter,
-    #             clip_preprocess,
-    #             grounding_dino_model,
-    #             sam_predictor,
-    #             class_names=class_names,
-    #             cfg=cfg,
-    #         )
-
-    #         # Save PC features
-    #         torch.save({"feat": grounded_features}, os.path.join(save_dir_feat, scene_id + ".pth"))
-    #         # Save 2D mask
-    #         torch.save(grounded_data_dict, os.path.join(save_dir, scene_id + ".pth"))
-              # empty cache
-    #         torch.cuda.empty_cache()

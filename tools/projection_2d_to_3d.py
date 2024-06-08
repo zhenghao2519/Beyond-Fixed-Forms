@@ -25,22 +25,6 @@ device = torch.device(
     else "mps" if torch.backends.mps.is_available() else "cpu"
 )
 
-# def compute_projected_pts(pts, cam_intr):
-#     # map 3d pointclouds in camera coordinates system to 2d
-#     N = pts.shape[0]
-#     projected_pts = np.empty((N, 2), dtype=np.int64)
-#     fx, fy = cam_intr[0, 0], cam_intr[1, 1]
-#     cx, cy = cam_intr[0, 2], cam_intr[1, 2]
-#     print("pt0 " ,pts[0])
-#     for i in range(pts.shape[0]):
-#         z = pts[i, 2]
-#         x = int(np.round(fx * pts[i, 0] / z + cx))
-#         y = int(np.round(fy * pts[i, 1] / z + cy))
-#         projected_pts[i, 0] = x
-#         projected_pts[i, 1] = y
-#     print("projected_pts", projected_pts[0])
-#     return projected_pts
-
 
 def compute_projected_pts_tensor(pts, cam_intr):
     # map 3d pointclouds in camera coordinates system to 2d
@@ -55,25 +39,6 @@ def compute_projected_pts_tensor(pts, cam_intr):
     projected_pts = (np.round(projected_pts)).astype(np.int64)
     return projected_pts
 
-
-# def compute_visibility_mask(pts, projected_pts, depth_im, depth_thresh=0.005):
-#     # compare z in camera coordinates and depth image
-#     # to check if there projected points are visible
-#     im_h, im_w = depth_im.shape
-#     # print(depth_im.shape)
-#     visibility_mask = np.zeros(projected_pts.shape[0]).astype(np.bool8)
-#     z = pts[:, 2]
-#     # print("DEBUG z value", z.max(), z.min(),z.mean())
-#     for i in range(projected_pts.shape[0]):
-#         x, y = projected_pts[i]
-#         z = pts[i, 2]
-#         if x < 0 or x >= im_w or y < 0 or y >= im_h:
-#             continue
-#         if depth_im[y, x] == 0:
-#             continue
-#         if np.abs(z - depth_im[y, x]) < depth_thresh and z > 0:
-#             visibility_mask[i] = True
-#     return visibility_mask
 
 
 def compute_visibility_mask_tensor(pts, projected_pts, depth_im, depth_thresh=0.005):
@@ -100,19 +65,6 @@ def compute_visibility_mask_tensor(pts, projected_pts, depth_im, depth_thresh=0.
     return visibility_mask # (N,)
 
 
-# def compute_visible_masked_pts(scene_pts, projected_pts, visibility_mask, pred_masks):
-#     # return masked 3d points
-#     N = scene_pts.shape[0]
-#     M, _, _ = pred_masks.shape  # (M, H, W)
-#     # print("DEBUG M value", M)
-#     masked_pts = np.zeros((M, N), dtype=np.bool_)
-#     visible_indices = np.nonzero(visibility_mask)[0]
-#     for m in range(M):
-#         for i in visible_indices:
-#             x, y = projected_pts[i]
-#             if pred_masks[m, y, x]:
-#                 masked_pts[m, i] = True
-#     return masked_pts
 
 def compute_visible_masked_pts_tensor(scene_pts, projected_pts, visibility_mask, pred_masks):
     # return masked 3d points
@@ -128,27 +80,6 @@ def compute_visible_masked_pts_tensor(scene_pts, projected_pts, visibility_mask,
     
     return masked_pts
 
-# def rle_decode(rle):
-#     """
-#     Decode rle to get binary mask.
-#     Args:
-#         rle (dict): rle of encoded mask
-#     Returns:
-#         mask (np.ndarray): decoded mask
-#     """
-#     length = rle["length"]
-#     try:
-#         s = rle["counts"].split()
-#     except:
-#         s = rle["counts"]
-
-#     starts, nums = [np.asarray(x, dtype=np.int32) for x in (s[0:][::2], s[1:][::2])]
-#     starts -= 1
-#     ends = starts + nums
-#     mask = np.zeros(length, dtype=np.uint8)
-#     for lo, hi in zip(starts, ends):
-#         mask[lo:hi] = 1
-#     return mask
 
 
 def get_parser():
@@ -169,9 +100,6 @@ if __name__ == "__main__":
         if torch.cuda.is_available()
         else "mps" if torch.backends.mps.is_available() else "cpu"
     )
-
-    # N = 254998 # number of 3d points
-    # visibility_count = np.zeros((N,), dtype=np.int32)
 
     # load camera configs
     # cam_intr = np.loadtxt("/home/jie_zhenghao/Open3DIS/data/Scannet200/Scannet200_2D_5interval/val/scene0435_00/intrinsic.txt")
