@@ -205,5 +205,7 @@ if __name__ == "__main__":
             all_points_masked[mask] = 1
           
     print("final masked points", all_points_masked.sum())  
-    torch.save({'ins':all_points_masked.unsqueeze(0), 'conf': torch.tensor([0.36]), 'final_class': torch.tensor([30])}, '/medar_smart/temp/Beyond-Fixed-Forms/output/mask_3d/final_all_3d_masks.pth')
+    if not os.path.exists(cfg.mask_3d_dir):
+        os.makedirs(cfg.mask_3d_dir)
+    torch.save({'ins':all_points_masked.unsqueeze(0), 'conf': torch.tensor([0.36]), 'final_class': torch.tensor([30])}, cfg.mask_3d_dir + f"{scene_id}.pth")
         
