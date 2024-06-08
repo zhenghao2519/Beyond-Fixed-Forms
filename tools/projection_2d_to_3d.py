@@ -204,6 +204,7 @@ if __name__ == "__main__":
     masked_counts = torch.zeros(scene_pcd.shape[1]).to(
         device=device
     )  # scene_pcd has shape (4, N)
+    masks_3d = {}
     for i in range(len(gronded_sam_results)):  # range(35,40):
 
         frame_id = gronded_sam_results[i]["frame_id"][:-4]
@@ -263,7 +264,7 @@ if __name__ == "__main__":
         # remove all the points under median occurance
         masked_counts[masked_counts < occurance_thres_value] = 0
 
-    elif cfg.if_detected_ratio_threshold:
+    elif cfg.if_detected_ratio_threshold: #!PROBLEM: this leaves small and uncontiguous mask!
         scene_id = cfg.scene_id
         root_dir = cfg.root_dir
         image_dir = os.path.join(root_dir, scene_id, "color")

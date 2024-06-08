@@ -27,10 +27,10 @@ sam_checkpoint: 'pretrained/sam_vit_h_4b8939.pth'
 sam_url: 'https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth'
 
 # backprojection methods
-if_occurance_threshold: False
+if_occurance_threshold: True
 occurance_threshold: 0.15 # points with occurance under lowest `occurance_threshold`% will be filtered out
 
-if_detected_ratio_threshold: True
+if_detected_ratio_threshold: False #!PROBLEM: this leaves small and uncontiguous mask!
 detected_ratio_threshold: 0.25 # points with detected ratio under lowest `detected_ratio_threshold`% will be filtered out
 
 # prompt
