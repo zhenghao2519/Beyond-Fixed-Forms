@@ -8,6 +8,10 @@ import random
 from os.path import join
 import open3d as o3d
 
+import argparse
+from munch import Munch
+import yaml
+
 def generate_palette(n):
     palette = []
     for _ in range(n):
@@ -184,6 +188,13 @@ class VisualizationScannet200:
             self.vis.add_points(f'single object mask: ' + str(i), self.point, tt_col, point_size=20, visible=True)
             print('---Done---')  
 
+
+def get_parser():
+    parser = argparse.ArgumentParser(description="Configuration Open3DIS")
+    parser.add_argument("--config",type=str,required = True,help="Config")
+    return parser
+
+
 if __name__ == "__main__":
     
     '''
@@ -196,8 +207,11 @@ if __name__ == "__main__":
         
     
     '''
+    args = get_parser().parse_args()
+    cfg = Munch.fromDict(yaml.safe_load(open(args.config, "r").read()))
+    
     # Scene ID to visualize
-    scene_id = 'scene0435_00' #'scene0435_00'
+    scene_id = cfg.scene_id #'scene0435_00'
 
     ##### The format follows the dataset tree
     ## 1
@@ -217,7 +231,7 @@ if __name__ == "__main__":
     agnostic_path = '../exp/version_check/final_result_hier_agglo/' + scene_id + '.pth'
     ## 6
     check_singleviz = True
-    output_dir = './output/mask_3d'
+    output_dir = os.path.join(cfg.mask_3d_dir, cfg.base_prompt)
     # agnostic_path = './data/Scannet200/Scannet200_3D/val/single_object_test/' + scene_id + '.pth'
 
     pyviz3d_dir = '../viz' # visualization directory

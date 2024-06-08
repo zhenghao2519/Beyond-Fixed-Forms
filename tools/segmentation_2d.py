@@ -216,8 +216,8 @@ if __name__ == "__main__":
     dino_text_threshold = cfg.dino_text_threshold
     with torch.cuda.amp.autocast():
         grounded_sam_results = inference_grounded_sam(downsampled_images_paths, text_prompt, dino_box_threshold, dino_text_threshold, mask_2d_dir)
-        os.makedirs(mask_2d_dir, exist_ok=True)
-        mask_2d_path = os.path.join(mask_2d_dir, f"{scene_id}.pth")
+        os.makedirs(os.path.join(mask_2d_dir, text_prompt), exist_ok=True)
+        mask_2d_path = os.path.join(mask_2d_dir, text_prompt ,f"{scene_id}.pth")
         torch.save(grounded_sam_results, mask_2d_path)   # save all segmented frame masks in a file
         torch.cuda.empty_cache()
 

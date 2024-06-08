@@ -138,7 +138,7 @@ if __name__ == "__main__":
     masks_2d_path = os.path.join(mask_2d_dir, f"{scene_id}.pth")
     gronded_sam_results = torch.load(masks_2d_path) 
 
-    all_points_masked = torch.zeros(scene_pcd.shape[1]) # scene_pcd has shape (4, N)
+    all_points_masked = torch.zeros(scene_pcd.shape[1]).to(device=device) # scene_pcd has shape (4, N)
     for i in range(len(gronded_sam_results)): # range(35,40): 
 
         frame_id = gronded_sam_results[i]["frame_id"][:-4]
@@ -202,10 +202,20 @@ if __name__ == "__main__":
         
         for mask in masked_pts:
             # print("single_mask shape", mask.shape, "all mask shape", all_points_masked.shape)
-            all_points_masked[mask] = 1
-          
+            all_points_masked[mask] += 1 
+    
+    occurance_counts = all_points_masked.unique()
+    print("occurance count", all_points_masked.unique())
+    occurance_thres = cfg.occurance_threshold
+    occurance_thres_value = occurance_counts[ round(occurance_thres * occurance_counts.shape[0]) ]
+    print("occurance thres value", occurance_thres_value)
+
+    # remove all the points under median occurance
+    all_points_masked[all_points_masked < occurance_thres_value] = 0
+
+    all_points_masked = all_points_masked > 0
     print("final masked points", all_points_masked.sum())  
-    if not os.path.exists(cfg.mask_3d_dir):
-        os.makedirs(cfg.mask_3d_dir)
-    torch.save({'ins':all_points_masked.unsqueeze(0), 'conf': torch.tensor([0.36]), 'final_class': torch.tensor([30])}, os.path.join(cfg.mask_3d_dir, f"{scene_id}.pth"))
+    
+    os.makedirs(os.path.join(cfg.mask_3d_dir, cfg.base_prompt), exist_ok=True)
+    torch.save({'ins':all_points_masked.unsqueeze(0), 'conf': torch.tensor([0.36]), 'final_class': torch.tensor([30])}, os.path.join(cfg.mask_3d_dir, cfg.base_prompt, f"{scene_id}.pth"))
         

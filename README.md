@@ -25,5 +25,5 @@ pip install -r requirements.txt
 ```
 
 ```
-python visualization/visualize_scannet200.py
+python visualization/visualize_scannet200.py  --config configs/config.yaml
 ```
