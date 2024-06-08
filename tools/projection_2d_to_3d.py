@@ -87,7 +87,7 @@ def compute_visibility_mask_tensor(pts, projected_pts, depth_im, depth_thresh=0.
         (projected_pts[:, 1] >= 0) &
         (projected_pts[:, 1] < im_h)
     )   # (N,)
-    projected_pts = projected_pts[inbounds]  # (M, 2)
+    projected_pts = projected_pts[inbounds]  # (X, 2)
     depth_check = (
         depth_im[projected_pts[:, 1], projected_pts[:, 0]] != 0
     ) & (
@@ -96,23 +96,36 @@ def compute_visibility_mask_tensor(pts, projected_pts, depth_im, depth_thresh=0.
     )
 
     visibility_mask[inbounds] = depth_check
-    return visibility_mask
+    return visibility_mask # (N,)
 
 
-def compute_visible_masked_pts(scene_pts, projected_pts, visibility_mask, pred_masks):
+# def compute_visible_masked_pts(scene_pts, projected_pts, visibility_mask, pred_masks):
+#     # return masked 3d points
+#     N = scene_pts.shape[0]
+#     M, _, _ = pred_masks.shape  # (M, H, W)
+#     # print("DEBUG M value", M)
+#     masked_pts = np.zeros((M, N), dtype=np.bool_)
+#     visible_indices = np.nonzero(visibility_mask)[0]
+#     for m in range(M):
+#         for i in visible_indices:
+#             x, y = projected_pts[i]
+#             if pred_masks[m, y, x]:
+#                 masked_pts[m, i] = True
+#     return masked_pts
+
+def compute_visible_masked_pts_tensor(scene_pts, projected_pts, visibility_mask, pred_masks):
     # return masked 3d points
     N = scene_pts.shape[0]
     M, _, _ = pred_masks.shape  # (M, H, W)
     # print("DEBUG M value", M)
     masked_pts = np.zeros((M, N), dtype=np.bool_)
-    visible_indices = np.nonzero(visibility_mask)[0]
+    visiable_pts = projected_pts[visibility_mask] # (X, 2)
     for m in range(M):
-        for i in visible_indices:
-            x, y = projected_pts[i]
-            if pred_masks[m, y, x]:
-                masked_pts[m, i] = True
+        x, y = visiable_pts.T # (X,)
+        mask_check = pred_masks[m, y, x] # (X,)
+        masked_pts[m, visibility_mask] = mask_check
+    
     return masked_pts
-
 
 # def rle_decode(rle):
 #     """
@@ -237,9 +250,14 @@ if __name__ == "__main__":
         # print(depth_im.max())
         # print("visibility check result", visibility_mask.sum())
 
-        masked_pts = compute_visible_masked_pts(
+        # masked_pts = compute_visible_masked_pts(
+        #     scene_pts, projected_pts, visibility_mask, pred_masks
+        # )  # (M, N)
+        masked_pts = compute_visible_masked_pts_tensor(
             scene_pts, projected_pts, visibility_mask, pred_masks
-        )  # (M, N)
+        )
+        # assert np.all(masked_pts == masked_pts_tensor)
+
         masked_pts = torch.from_numpy(masked_pts).to(device)
         # if ground_indices is not None:
         #     masked_pts[:, ground_indices] = 0
