@@ -217,6 +217,7 @@ if __name__ == "__main__":
     agnostic_path = '../exp/version_check/final_result_hier_agglo/' + scene_id + '.pth'
     ## 6
     check_singleviz = True
+    output_dir = './output/mask_3d'
     # agnostic_path = './data/Scannet200/Scannet200_3D/val/single_object_test/' + scene_id + '.pth'
 
     pyviz3d_dir = '../viz' # visualization directory
@@ -240,5 +241,5 @@ if __name__ == "__main__":
     if check_finalviz:
         VIZ.finalviz(agnostic_path, specific = True, vocab = True)
     if check_singleviz:
-        VIZ.singleviz("./output/mask_3d/mask_3dscene0435_00.pth", specific = False, vocab = False)
+        VIZ.singleviz(os.path.join(output_dir,scene_id + '.pth'), specific = False, vocab = False)
     VIZ.save(pyviz3d_dir)

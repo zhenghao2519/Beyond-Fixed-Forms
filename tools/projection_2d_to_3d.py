@@ -207,5 +207,5 @@ if __name__ == "__main__":
     print("final masked points", all_points_masked.sum())  
     if not os.path.exists(cfg.mask_3d_dir):
         os.makedirs(cfg.mask_3d_dir)
-    torch.save({'ins':all_points_masked.unsqueeze(0), 'conf': torch.tensor([0.36]), 'final_class': torch.tensor([30])}, cfg.mask_3d_dir + f"{scene_id}.pth")
+    torch.save({'ins':all_points_masked.unsqueeze(0), 'conf': torch.tensor([0.36]), 'final_class': torch.tensor([30])}, os.path.join(cfg.mask_3d_dir, f"{scene_id}.pth"))
         
