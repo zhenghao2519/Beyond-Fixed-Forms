@@ -26,14 +26,28 @@ def compute_projected_pts(pts, cam_intr):
     projected_pts = np.empty((N, 2), dtype=np.int64)
     fx, fy = cam_intr[0, 0], cam_intr[1, 1]
     cx, cy = cam_intr[0, 2], cam_intr[1, 2]
+    print("pt0 " ,pts[0])
     for i in range(pts.shape[0]):
         z = pts[i, 2]
         x = int(np.round(fx * pts[i, 0] / z + cx))
         y = int(np.round(fy * pts[i, 1] / z + cy))
         projected_pts[i, 0] = x
         projected_pts[i, 1] = y
+    print("projected_pts", projected_pts[0])
     return projected_pts
 
+def compute_projected_pts_tensor(pts, cam_intr):
+    # map 3d pointclouds in camera coordinates system to 2d
+    # pts shape (N, 3)
+
+    pts = pts.T # (3, N)
+    # print("cam_int", cam_intr)
+    projected_pts = cam_intr @ pts / pts[2]# (3, N)
+    # print("pts0", pts[:,0])
+    # print("projected_pts0", (cam_intr @ pts[:,0]).astype(np.int64))
+    projected_pts = projected_pts[:2].T # (N, 2)
+    projected_pts = (np.round(projected_pts)).astype(np.int64)
+    return projected_pts
 
 def compute_visibility_mask(pts, projected_pts, depth_im, depth_thresh=0.005):
     # compare z in camera coordinates and depth image 
@@ -69,27 +83,27 @@ def compute_visible_masked_pts(scene_pts, projected_pts, visibility_mask, pred_m
                 masked_pts[m, i] = True
     return masked_pts
 
-def rle_decode(rle):
-    """
-    Decode rle to get binary mask.
-    Args:
-        rle (dict): rle of encoded mask
-    Returns:
-        mask (np.ndarray): decoded mask
-    """
-    length = rle["length"]
-    try:
-        s = rle["counts"].split()
-    except:
-        s = rle["counts"]
+# def rle_decode(rle):
+#     """
+#     Decode rle to get binary mask.
+#     Args:
+#         rle (dict): rle of encoded mask
+#     Returns:
+#         mask (np.ndarray): decoded mask
+#     """
+#     length = rle["length"]
+#     try:
+#         s = rle["counts"].split()
+#     except:
+#         s = rle["counts"]
 
-    starts, nums = [np.asarray(x, dtype=np.int32) for x in (s[0:][::2], s[1:][::2])]
-    starts -= 1
-    ends = starts + nums
-    mask = np.zeros(length, dtype=np.uint8)
-    for lo, hi in zip(starts, ends):
-        mask[lo:hi] = 1
-    return mask
+#     starts, nums = [np.asarray(x, dtype=np.int32) for x in (s[0:][::2], s[1:][::2])]
+#     starts -= 1
+#     ends = starts + nums
+#     mask = np.zeros(length, dtype=np.uint8)
+#     for lo, hi in zip(starts, ends):
+#         mask[lo:hi] = 1
+#     return mask
 
 def get_parser():
     parser = argparse.ArgumentParser(description="Configuration Open3DIS")
@@ -151,31 +165,13 @@ if __name__ == "__main__":
         # map 3d pointclouds to 2d
         cam_pose = np.loadtxt(os.path.join(cam_pose_dir, f"{frame_id}.txt"))
 
-        ###!!!!!!!!! TEST IF TRANSFORMED CORRECTLY
-        # coords = torch.from_numpy(np.asarray(scene_pcd.points))
-        # print("shape of coords",coords.shape, coords.max())
-        # coords_new = torch.cat([coords, torch.ones([coords.shape[0], 1], dtype=torch.float, device='cpu')], dim=1).T
-        # print("shape of coords_new",coords_new.shape, coords_new.max())
-        # world_to_camera = torch.linalg.inv(torch.from_numpy(cam_pose))
-        # print("shape of world_to_camera",world_to_camera)
-        # p = world_to_camera.float() @ coords_new.float()
-        # print("shape of p after mult",p.shape, p.max())
-        # cam_intr_t = torch.from_numpy(np.array(
-        #             [[577.870605, 0.0, 319.5], 
-        #              [0.0, 577.870605, 239.5],
-        #              [0.0, 0.0, 1.0]]))
-        # p[0] = (p[0] * cam_intr_t[0][0]) / p[2] + cam_intr_t[0][2]
-        # p[1] = (p[1] * cam_intr_t[1][1]) / p[2] + cam_intr_t[1][2]
-        # # p = p.reshape(-1,4)
-        # print("shape of p final p",p.shape, p[0][0])
-
         scene_pts = copy.deepcopy(scene_pcd)
         scene_pts = (np.linalg.inv(cam_pose) @ scene_pts).T[:,:3] # (N, 3)
         # print(scene_pts.shape, np.max(scene_pts[:,2]), np.min(scene_pts[:,2]))
         # pcd = copy.deepcopy(pcd).transform(np.linalg.inv(cam_pose)) # world to camera
         # scene_pts = np.asarray(pcd.points)
-        projected_pts = compute_projected_pts(scene_pts, cam_intr)
-        # print("projected_pts", projected_pts[:,0].mean(), projected_pts[:,1].mean())
+        # projected_pts = compute_projected_pts(scene_pts, cam_intr)
+        projected_pts = compute_projected_pts_tensor(scene_pts, cam_intr)
 
         depth_im_dir = cfg.depth_im_dir
         # frame_id_num = frame_id.split('.')[0]
