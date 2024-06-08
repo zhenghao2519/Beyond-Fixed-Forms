@@ -23,4 +23,4 @@ sam_checkpoint: 'pretrained/sam_vit_h_4b8939.pth'
 sam_url: 'https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth'
 
 # prompt
-base_prompt: "clothes"  #, Pillow, Chair, Sofa, Bed, Desk, Monitor, Television, Book"
+base_prompt: "Jeans"  #, Pillow, Chair, Sofa, Bed, Desk, Monitor, Television, Book"

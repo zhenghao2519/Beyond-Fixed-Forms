@@ -156,9 +156,9 @@ def inference_grounded_sam(image_paths, base_prompt,  dino_box_threshold, dino_t
             for i in range(segmented_frame_masks.shape[0]):
                 annotated_frame_with_mask = draw_mask(segmented_frame_masks[i][0], annotated_frame_with_mask)
                 
-            if not os.path.exists(os.path.join(mask_2d_dir, "vis_masks")):
-                os.makedirs(os.path.join(mask_2d_dir, "vis_masks"))
-            Image.fromarray(annotated_frame_with_mask).save(os.path.join(mask_2d_dir, "vis_masks", frame_id+".png"))
+            # if not os.ath.exists(os.path.join(mask_2d_dir, "vis_masks")):
+            os.makedirs(os.path.join(mask_2d_dir, "vis_masks", base_prompt), exist_ok=True)
+            Image.fromarray(annotated_frame_with_mask).save(os.path.join(mask_2d_dir, "vis_masks", base_prompt, frame_id[:-4]+".png"))
             
             
             
