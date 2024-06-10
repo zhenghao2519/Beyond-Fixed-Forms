@@ -173,6 +173,7 @@ class VisualizationScannet200:
             pallete =  generate_palette(int(2e3 + 1))
             tt_col = self.color.copy()
             limit = 5
+            print("instance shape", instance.shape)
             for i in range(0, instance.shape[0]):
                 # print('DEBUG   '+str(instance.shape) + str(len(pallete)) + str(len(tt_col)))
                 tt_col[instance[i] == 1] = pallete[i]
@@ -181,7 +182,7 @@ class VisualizationScannet200:
                     tt_col_specific = self.color.copy()
                     tt_col_specific[instance[i] == 1] = pallete[i]
                     if vocab == True:
-                        self.vis.add_points(f'single object mask: ' + str(i) + '_' + class_names[label[i]], self.point, tt_col_specific, point_size=20, visible=True)                
+                        self.vis.add_points(f'single object mask: ' + str(i) + '_' + label[i] + '_' + str(conf2d[i].item())[:5], self.point, tt_col_specific, point_size=20, visible=True)                
                     else:
                         self.vis.add_points(f'single object mask: ' + str(i) + '_' + str(conf2d[i].item())[:5], self.point, tt_col_specific, point_size=20, visible=True)
 
