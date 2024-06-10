@@ -126,7 +126,7 @@ if __name__ == "__main__":
 
     # 2d sam masks
     # annotated_frame, segmented_frame_masks = inference_grounded_sam()
-    masks_2d_path = os.path.join(mask_2d_dir, f"{scene_id}.pth")
+    masks_2d_path = os.path.join(mask_2d_dir, cfg.base_prompt,f"{scene_id}.pth")
     gronded_sam_results = torch.load(masks_2d_path)
 
     masked_counts = torch.zeros(scene_pcd.shape[1]).to(

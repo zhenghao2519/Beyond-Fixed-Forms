@@ -15,12 +15,16 @@ mask_3d_dir: "output/mask_3d"
 width_2d: 1296
 height_2d: 968
 
+# frames downsample ratio
+downsample_ratio: 10 # pick 1 frame every `downsample_ratio` frames
+
+
 # grounding dino
 ckpt_repo_id: "ShilongLiu/GroundingDINO"
 ckpt_filename: "groundingdino_swinb_cogcoor.pth"
 ckpt_config_filename: "GroundingDINO_SwinB.cfg.py"
-dino_box_threshold: 0.4
-dino_text_threshold: 0.4
+dino_box_threshold: 0.35
+dino_text_threshold: 0.35
 
 # sam
 sam_checkpoint: 'pretrained/sam_vit_h_4b8939.pth'
@@ -28,10 +32,10 @@ sam_url: 'https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth'
 
 # backprojection methods
 if_occurance_threshold: True
-occurance_threshold: 0.15 # points with occurance under lowest `occurance_threshold`% will be filtered out
+occurance_threshold: 0.25 # points with occurance under lowest `occurance_threshold`% will be filtered out
 
 if_detected_ratio_threshold: False #!PROBLEM: this leaves small and uncontiguous mask!
 detected_ratio_threshold: 0.25 # points with detected ratio under lowest `detected_ratio_threshold`% will be filtered out
 
 # prompt
-base_prompt: "Jeans"  #, Pillow, Chair, Sofa, Bed, Desk, Monitor, Television, Book"
+base_prompt: "Clothes"  #, Pillow, Chair, Sofa, Bed, Desk, Monitor, Television, Book"

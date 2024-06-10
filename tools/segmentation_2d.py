@@ -89,7 +89,7 @@ def detect(image_source, image, text_prompt, model, box_threshold = 0.4, text_th
   annotated_frame = annotate(image_source=image_source, boxes=boxes, logits=logits, phrases=phrases)
   annotated_frame = annotated_frame[...,::-1] # BGR to RGB 
 #   print(f"Detected {len(boxes)} boxes")
-  return annotated_frame, boxes 
+  return annotated_frame, boxes , logits, phrases # box, confidence, label
 
 # Segment and draw masks using SAM
 def segment(image, sam_model, boxes):
@@ -143,7 +143,7 @@ def inference_grounded_sam(image_paths, base_prompt,  dino_box_threshold, dino_t
         image_source, image = load_image(image_path)
         if image_source is None or image is None:               # skip the image if not loaded
             continue
-        annotated_frame, detected_boxes = detect(image_source, image, text_prompt=base_prompt, model=groundingdino_model.to(device), box_threshold= dino_box_threshold, text_threshold=dino_text_threshold)
+        annotated_frame, detected_boxes, confidences, labels = detect(image_source, image, text_prompt=base_prompt, model=groundingdino_model.to(device), box_threshold= dino_box_threshold, text_threshold=dino_text_threshold)
         if detected_boxes is None or len(detected_boxes) == 0:  # skip the image if no boxes detected
             continue
         num_img_with_boxes += 1
@@ -164,7 +164,9 @@ def inference_grounded_sam(image_paths, base_prompt,  dino_box_threshold, dino_t
             
         results.append({
             "frame_id": frame_id, 
-            "segmented_frame_masks": segmented_frame_masks # (M, 1, W, H)
+            "segmented_frame_masks": segmented_frame_masks, # (M, 1, W, H)
+            "confidences": confidences, 
+            "labels": labels,
             # "segmented_frame_masks_rle": segmented_frame_masks_rle
             })   # add keys "annotated_frame", "detected_boxes" if needed
         
