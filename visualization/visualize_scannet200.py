@@ -172,7 +172,7 @@ class VisualizationScannet200:
                 label = dic['final_class']
             pallete =  generate_palette(int(2e3 + 1))
             tt_col = self.color.copy()
-            limit = 5
+            limit = 20
             print("instance shape", instance.shape)
             for i in range(0, instance.shape[0]):
                 # print('DEBUG   '+str(instance.shape) + str(len(pallete)) + str(len(tt_col)))
@@ -256,5 +256,5 @@ if __name__ == "__main__":
     if check_finalviz:
         VIZ.finalviz(agnostic_path, specific = True, vocab = True)
     if check_singleviz:
-        VIZ.singleviz(os.path.join(output_dir,scene_id + '.pth'), specific = False, vocab = False)
+        VIZ.singleviz(os.path.join(output_dir,scene_id + '.pth'), specific = True, vocab = False)
     VIZ.save(pyviz3d_dir)
