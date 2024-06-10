@@ -34,7 +34,12 @@ occurance_threshold: 0.25 # points with occurance under lowest `occurance_thresh
 if_detected_ratio_threshold: True
 detected_ratio_threshold: 0.35 # points with detected ratio under lowest `detected_ratio_threshold`% will be filtered out
 
+# Aggregate
+iou_thres: 0.3
+similarity_thres: 0.75
+
+# Filtering
 remove_filtered_masks: 0.5 # remove masks containing less than `remove_filtered_masks` percent points after filtering
-remove_small_masks: 20 # 3d masks with less than `remove_small_masks` points will be removed
+remove_small_masks: 100 # 3d masks with less than `remove_small_masks` points will be removed
 # prompt
 base_prompt: "Clothes" #, Pillow, Chair, Sofa, Bed, Desk, Monitor, Television, Book"
