@@ -238,7 +238,7 @@ if __name__ == "__main__":
 
     elif (
         cfg.if_detected_ratio_threshold
-    ):  #!PROBLEM: this leaves small and uncontiguous mask!
+    ):  
         scene_id = cfg.scene_id
         root_dir = cfg.root_dir
         image_dir = os.path.join(root_dir, scene_id, "color")
@@ -304,8 +304,19 @@ if __name__ == "__main__":
     backprojected_3d_masks["conf"] = torch.tensor(backprojected_3d_masks["conf"]) # (Ins,)
 
     # apply filtering on backprojected_3d_masks["ins"]
+    print("before filtering", backprojected_3d_masks["ins"].shape)
+    num_ins_points_before_filtering = backprojected_3d_masks["ins"].sum(dim=1) # (Ins,)
     backprojected_3d_masks["ins"] &= masked_points.unsqueeze(0)  # (Ins, N)
+    num_ins_points_after_filtering = backprojected_3d_masks["ins"].sum(dim=1) # (Ins,)
+    print("num_ins_points_before_filtering", num_ins_points_before_filtering)
+    print("num_ins_points_after_filtering", num_ins_points_after_filtering)
+    # print(" num of points being filtered in each mask", num_ins_points_before_filtering-num_ins_points_after_filtering)
+    
+    # delete the masks with less than 1/2 points after filtering and have more than 50 points
+    backprojected_3d_masks["ins"] = backprojected_3d_masks["ins"][(num_ins_points_after_filtering > cfg.remove_small_masks) & (num_ins_points_after_filtering > cfg.remove_filtered_masks * num_ins_points_before_filtering)]
+    print("after filtering", backprojected_3d_masks["ins"].shape)
 
+    # save the backprojected_3d_masks
     os.makedirs(os.path.join(cfg.mask_3d_dir, cfg.base_prompt), exist_ok=True)
     torch.save(
         backprojected_3d_masks,

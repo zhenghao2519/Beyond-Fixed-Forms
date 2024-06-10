@@ -1,9 +1,7 @@
-
-
 # paths
-dataset: 'Scannet200'
-scene_id: 'scene0435_00'
-root_dir: 'data/Scannet200/Scannet200_2D_5interval/val'
+dataset: "Scannet200"
+scene_id: "scene0435_00"
+root_dir: "data/Scannet200/Scannet200_2D_5interval/val"
 # scene_pcd_path: "/home/jie_zhenghao/Open3DIS/data/Scannet200/Scannet200_3D/val/original_ply_files/scene0435_00.ply"
 scene_pcd_path: "data/Scannet200/Scannet200_3D/val/original_npy_files/scene0435_00.npy"
 cam_pose_dir: "data/Scannet200/Scannet200_2D_5interval/val/scene0435_00/pose/"
@@ -18,7 +16,6 @@ height_2d: 968
 # frames downsample ratio
 downsample_ratio: 10 # pick 1 frame every `downsample_ratio` frames
 
-
 # grounding dino
 ckpt_repo_id: "ShilongLiu/GroundingDINO"
 ckpt_filename: "groundingdino_swinb_cogcoor.pth"
@@ -27,15 +24,17 @@ dino_box_threshold: 0.35
 dino_text_threshold: 0.35
 
 # sam
-sam_checkpoint: 'pretrained/sam_vit_h_4b8939.pth'
-sam_url: 'https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth'
+sam_checkpoint: "pretrained/sam_vit_h_4b8939.pth"
+sam_url: "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth"
 
 # backprojection methods
-if_occurance_threshold: True
+if_occurance_threshold: False
 occurance_threshold: 0.25 # points with occurance under lowest `occurance_threshold`% will be filtered out
 
-if_detected_ratio_threshold: False #!PROBLEM: this leaves small and uncontiguous mask!
-detected_ratio_threshold: 0.25 # points with detected ratio under lowest `detected_ratio_threshold`% will be filtered out
+if_detected_ratio_threshold: True
+detected_ratio_threshold: 0.35 # points with detected ratio under lowest `detected_ratio_threshold`% will be filtered out
 
+remove_filtered_masks: 0.5 # remove masks containing less than `remove_filtered_masks` percent points after filtering
+remove_small_masks: 20 # 3d masks with less than `remove_small_masks` points will be removed
 # prompt
-base_prompt: "Clothes"  #, Pillow, Chair, Sofa, Bed, Desk, Monitor, Television, Book"
+base_prompt: "Clothes" #, Pillow, Chair, Sofa, Bed, Desk, Monitor, Television, Book"
