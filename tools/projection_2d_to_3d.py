@@ -17,7 +17,6 @@ from tqdm import tqdm
 import sys
 
 
-
 sys.path.append("/medar_smart/temp/Beyond-Fixed-Forms/tools")
 from segmentation_2d import inference_grounded_sam
 
@@ -31,6 +30,8 @@ device = torch.device(
 """
 1. Project 2d masks to 3d point cloud
 """
+
+
 def compute_projected_pts_tensor(pts, cam_intr):
     # map 3d pointclouds in camera coordinates system to 2d
     # pts shape (N, 3)
@@ -87,8 +88,12 @@ def compute_visible_masked_pts_tensor(
 """
 2. Aggregating 3d masks
 """
-def aggregate(backprojected_3d_masks, iou_threshold=0.25, feature_similarity_threshold=0.75):
-    '''
+
+
+def aggregate(
+    backprojected_3d_masks, iou_threshold=0.25, feature_similarity_threshold=0.75
+):
+    """
     calculate iou
     calculate feature similarity
 
@@ -96,56 +101,68 @@ def aggregate(backprojected_3d_masks, iou_threshold=0.25, feature_similarity_thr
         aggregate
     else:
         create new mask
-    '''
-    labels = backprojected_3d_masks["final_class"] # List[str]
+    """
+    labels = backprojected_3d_masks["final_class"]  # List[str]
     semantic_matrix = calculate_feature_similarity(labels)
 
-    ins_masks = backprojected_3d_masks["ins"].to(device) # (Ins, N)
+    ins_masks = backprojected_3d_masks["ins"].to(device)  # (Ins, N)
     iou_matrix = calculate_iou(ins_masks)
 
-    confidences = backprojected_3d_masks["conf"].to(device) # (Ins, )
+    confidences = backprojected_3d_masks["conf"].to(device)  # (Ins, )
 
-    merge_matrix = semantic_matrix & (iou_matrix > iou_threshold) # dtype: bool (Ins, Ins)
+    merge_matrix = semantic_matrix & (
+        iou_matrix > iou_threshold
+    )  # dtype: bool (Ins, Ins)
 
     # aggregate masks with high iou
-    aggregated_masks, aggregated_confidences, aggregated_labels , mask_indeces_to_be_merged= merge_masks(ins_masks, confidences, labels, merge_matrix, iou_threshold)
+    (
+        aggregated_masks,
+        aggregated_confidences,
+        aggregated_labels,
+        mask_indeces_to_be_merged,
+    ) = merge_masks(ins_masks, confidences, labels, merge_matrix, iou_threshold)
 
     # solve overlapping
-    final_masks  = solve_overlapping(aggregated_masks, mask_indeces_to_be_merged)
+    final_masks = solve_overlapping(
+        aggregated_masks, aggregated_labels, mask_indeces_to_be_merged
+    )
 
     return {
-        "ins": final_masks, # torch.tensor (Ins, N)
-        "conf": aggregated_confidences, # torch.tensor (Ins, )
-        "final_class": aggregated_labels # List[str] (Ins,)
+        "ins": final_masks,  # torch.tensor (Ins, N)
+        "conf": aggregated_confidences,  # torch.tensor (Ins, )
+        "final_class": aggregated_labels,  # List[str] (Ins,)
     }
-    
-    
 
 
 def calculate_iou(ins_masks):
-    '''calculate iou between all masks
+    """calculate iou between all masks
 
     args:
         ins_masks: torch.tensor (Ins, N)
 
-    return: 
+    return:
         iou_matrix: torch.tensor (Ins, Ins)
-    '''
+    """
     ins_masks = ins_masks.float()
-    intersection = torch.matmul(ins_masks, ins_masks.T) # (Ins, Ins)
-    union = torch.sum(ins_masks, dim=1).unsqueeze(1) + torch.sum(ins_masks, dim=1).unsqueeze(0) - intersection
+    intersection = torch.matmul(ins_masks, ins_masks.T)  # (Ins, Ins)
+    union = (
+        torch.sum(ins_masks, dim=1).unsqueeze(1)
+        + torch.sum(ins_masks, dim=1).unsqueeze(0)
+        - intersection
+    )
     iou_matrix = intersection / union
     return iou_matrix
 
+
 def calculate_feature_similarity(labels: list[str]):
-    '''calculate feature similarity between all masks
+    """calculate feature similarity between all masks
 
     args:
         labels: list[str]
 
-    return: 
+    return:
         feature_similarity_matrix: torch.tensor (Ins, Ins)
-    ''' # TODO: add clip feature similarity
+    """  # TODO: add clip feature similarity
     feature_similarity_matrix = torch.zeros(len(labels), len(labels), device=device)
     for i in range(len(labels)):
         for j in range(i, len(labels)):
@@ -158,8 +175,13 @@ def calculate_feature_similarity(labels: list[str]):
     return feature_similarity_matrix
 
 
-
-def merge_masks(ins_masks: torch.Tensor,confidences:torch.Tensor, labels: list[str], merge_matrix, iou_threshold):
+def merge_masks(
+    ins_masks: torch.Tensor,
+    confidences: torch.Tensor,
+    labels: list[str],
+    merge_matrix,
+    iou_threshold,
+):
 
     # find masks to be merged
     merge_matrix = merge_matrix.float()
@@ -181,16 +203,19 @@ def merge_masks(ins_masks: torch.Tensor,confidences:torch.Tensor, labels: list[s
             mask |= ins_masks[index]
             conf.append(confidences[index])
         aggregated_masks.append(mask)
-        aggregated_confidences.append(sum(conf)/len(conf))
+        aggregated_confidences.append(sum(conf) / len(conf))
         aggregated_labels.append(labels[mask_indeces[0]])
 
     # convert type
-    aggregated_masks = torch.stack(aggregated_masks) # (Ins, N)
-    aggregated_confidences = torch.tensor(aggregated_confidences) # (Ins, )
+    aggregated_masks = torch.stack(aggregated_masks)  # (Ins, N)
+    aggregated_confidences = torch.tensor(aggregated_confidences)  # (Ins, )
 
-    return aggregated_masks, aggregated_confidences, aggregated_labels, mask_indeces_to_be_merged
-
-
+    return (
+        aggregated_masks,
+        aggregated_confidences,
+        aggregated_labels,
+        mask_indeces_to_be_merged,
+    )
 
 
 def find_unconnected_subgraphs_tensor(adj_matrix):
@@ -199,12 +224,12 @@ def find_unconnected_subgraphs_tensor(adj_matrix):
     identity = torch.eye(num_nodes, dtype=torch.float32)
     # Start with the adjacency matrix itself
     reachability_matrix = adj_matrix.clone()
-    
+
     # Repeat matrix multiplication to propagate connectivity
     for _ in range(num_nodes):
         reachability_matrix = torch.matmul(reachability_matrix, adj_matrix) + adj_matrix
         reachability_matrix = torch.clamp(reachability_matrix, 0, 1)
-    
+
     # Identify unique connected components
     components = []
     visited = torch.zeros(num_nodes, dtype=torch.bool)
@@ -216,22 +241,26 @@ def find_unconnected_subgraphs_tensor(adj_matrix):
             component = [component] if isinstance(component, int) else component
             components.append(component)
             visited[component_mask] = True
-    
+
     return components
 
-def solve_overlapping(aggregated_masks, mask_indeces_to_be_merged):
+
+def solve_overlapping(aggregated_masks, aggregated_labels, mask_indeces_to_be_merged):
     """
     solve overlapping among all masks
-    """ 
+    """
     # number of aggrated inital masks in each aggregated mask
-    num_masks = [len(mask_indeces) for mask_indeces in mask_indeces_to_be_merged] 
+    num_masks = [len(mask_indeces) for mask_indeces in mask_indeces_to_be_merged]
 
     # find overlapping masks in aggregated_masks
     overlapping_masks = []
     for i in range(len(aggregated_masks)):
-        for j in range(i+1, len(aggregated_masks)):
-            if torch.any(aggregated_masks[i] & aggregated_masks[j]):
-                overlapping_masks.append((i,j))
+        for j in range(i + 1, len(aggregated_masks)):
+            if (
+                torch.any(aggregated_masks[i] & aggregated_masks[j])
+                and aggregated_labels[i] == aggregated_labels[j]
+            ):
+                overlapping_masks.append((i, j))
 
     # only keep overlapped points for masks aggregated from more masks
     for i, j in overlapping_masks:
@@ -240,18 +269,19 @@ def solve_overlapping(aggregated_masks, mask_indeces_to_be_merged):
         else:
             aggregated_masks[i] &= ~aggregated_masks[j]
 
-
     return aggregated_masks
 
 
 """
 3. Filtering 3d masks
-""" # TODO: rewrite filtering in __main__ to a function here
+"""  # TODO: rewrite filtering in __main__ to a function here
 
 
 """
 *: Help functions
 """
+
+
 def get_parser():
     parser = argparse.ArgumentParser(description="Configuration Open3DIS")
     parser.add_argument("--config", type=str, required=True, help="Config")
@@ -305,10 +335,10 @@ if __name__ == "__main__":
 
     # 3d mask aggregation
     backprojected_3d_masks = {
-        "ins": [], # (Ins, N)
-        "conf": [], # (Ins, )
-        "final_class": [], # (Ins,)
-    }  
+        "ins": [],  # (Ins, N)
+        "conf": [],  # (Ins, )
+        "final_class": [],  # (Ins,)
+    }
 
     for i in range(len(gronded_sam_results)):  # range(35,40):
 
@@ -343,7 +373,7 @@ if __name__ == "__main__":
             scene_pts, projected_pts, visibility_mask, pred_masks
         )
 
-        masked_pts = torch.from_numpy(masked_pts).to(device) # (M, N)
+        masked_pts = torch.from_numpy(masked_pts).to(device)  # (M, N)
         mask_area = torch.sum(masked_pts, dim=1).detach().cpu().numpy()  # (M,)
         print(
             "number of 3d mask points:",
@@ -362,12 +392,19 @@ if __name__ == "__main__":
             masked_counts[mask] += 1
 
     # convert each value in backprojected_3d_masks to tensor
-    backprojected_3d_masks["ins"] = torch.stack(backprojected_3d_masks["ins"], dim=0) # (Ins, N)
-    backprojected_3d_masks["conf"] = torch.tensor(backprojected_3d_masks["conf"]) # (Ins,)
+    backprojected_3d_masks["ins"] = torch.stack(
+        backprojected_3d_masks["ins"], dim=0
+    )  # (Ins, N)
+    backprojected_3d_masks["conf"] = torch.tensor(
+        backprojected_3d_masks["conf"]
+    )  # (Ins,)
 
     """Aggregating 3d masks"""
-    backprojected_3d_masks = aggregate(backprojected_3d_masks, iou_threshold=cfg.iou_thres, feature_similarity_threshold=cfg.similarity_thres)
-
+    backprojected_3d_masks = aggregate(
+        backprojected_3d_masks,
+        iou_threshold=cfg.iou_thres,
+        feature_similarity_threshold=cfg.similarity_thres,
+    )
 
     """Filtering 3d masks"""
     if cfg.if_occurance_threshold:
@@ -382,9 +419,7 @@ if __name__ == "__main__":
         # remove all the points under median occurance
         masked_counts[masked_counts < occurance_thres_value] = 0
 
-    elif (
-        cfg.if_detected_ratio_threshold
-    ):  
+    elif cfg.if_detected_ratio_threshold:
         scene_id = cfg.scene_id
         root_dir = cfg.root_dir
         image_dir = os.path.join(root_dir, scene_id, "color")
@@ -444,21 +479,26 @@ if __name__ == "__main__":
     masked_points = masked_counts > 0  # shape (N,)
     print("final masked points", masked_points.sum())
 
-
     # convert each value in backprojected_3d_masks to tensor
-    backprojected_3d_masks["ins"] = backprojected_3d_masks["ins"]# (Ins, N)
-    backprojected_3d_masks["conf"] = backprojected_3d_masks["conf"] # (Ins,)
+    backprojected_3d_masks["ins"] = backprojected_3d_masks["ins"]  # (Ins, N)
+    backprojected_3d_masks["conf"] = backprojected_3d_masks["conf"]  # (Ins,)
 
     # apply filtering on backprojected_3d_masks["ins"]
     print("before filtering", backprojected_3d_masks["ins"].shape)
-    num_ins_points_before_filtering = backprojected_3d_masks["ins"].sum(dim=1) # (Ins,)
+    num_ins_points_before_filtering = backprojected_3d_masks["ins"].sum(dim=1)  # (Ins,)
     backprojected_3d_masks["ins"] &= masked_points.unsqueeze(0)  # (Ins, N)
-    num_ins_points_after_filtering = backprojected_3d_masks["ins"].sum(dim=1) # (Ins,)
+    num_ins_points_after_filtering = backprojected_3d_masks["ins"].sum(dim=1)  # (Ins,)
     print("num_ins_points_before_filtering", num_ins_points_before_filtering)
     # print(" num of points being filtered in each mask", num_ins_points_before_filtering-num_insgi_points_after_filtering)
-    
+
     # delete the masks with less than 1/2 points after filtering and have more than 50 points
-    backprojected_3d_masks["ins"] = backprojected_3d_masks["ins"][(num_ins_points_after_filtering > cfg.remove_small_masks) & (num_ins_points_after_filtering > cfg.remove_filtered_masks * num_ins_points_before_filtering)]
+    backprojected_3d_masks["ins"] = backprojected_3d_masks["ins"][
+        (num_ins_points_after_filtering > cfg.remove_small_masks)
+        & (
+            num_ins_points_after_filtering
+            > cfg.remove_filtered_masks * num_ins_points_before_filtering
+        )
+    ]
     print("after filtering", backprojected_3d_masks["ins"].shape)
     print("num_ins_points_after_filtering", backprojected_3d_masks["ins"].sum(dim=1))
 
