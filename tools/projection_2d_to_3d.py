@@ -123,9 +123,7 @@ def aggregate(
     ) = merge_masks(ins_masks, confidences, labels, merge_matrix)
 
     # solve overlapping
-    final_masks = solve_overlapping(
-        aggregated_masks, aggregated_labels, mask_indeces_to_be_merged
-    )
+    final_masks = solve_overlapping(aggregated_masks, mask_indeces_to_be_merged)
 
     return {
         "ins": final_masks,  # torch.tensor (Ins, N)
@@ -246,7 +244,6 @@ def find_unconnected_subgraphs_tensor(adj_matrix: torch.Tensor) -> list[list[int
 
 def solve_overlapping(
     aggregated_masks: torch.Tensor,
-    aggregated_labels: dict[str],
     mask_indeces_to_be_merged: list[list[int]],
 ) -> torch.Tensor:
     """
@@ -259,10 +256,7 @@ def solve_overlapping(
     overlapping_masks = []
     for i in range(len(aggregated_masks)):
         for j in range(i + 1, len(aggregated_masks)):
-            if (
-                torch.any(aggregated_masks[i] & aggregated_masks[j])
-                and aggregated_labels[i] == aggregated_labels[j]
-            ):
+            if torch.any(aggregated_masks[i] & aggregated_masks[j]):
                 overlapping_masks.append((i, j))
 
     # only keep overlapped points for masks aggregated from more masks
