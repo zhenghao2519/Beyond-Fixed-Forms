@@ -16,6 +16,7 @@ from munch import Munch
 from tqdm import tqdm
 import sys
 
+
 sys.path.append("/medar_smart/temp/Beyond-Fixed-Forms/tools")
 from segmentation_2d import inference_grounded_sam
 
@@ -24,6 +25,11 @@ device = torch.device(
     if torch.cuda.is_available()
     else "mps" if torch.backends.mps.is_available() else "cpu"
 )
+
+
+"""
+1. Project 2d masks to 3d point cloud
+"""
 
 
 def compute_projected_pts_tensor(pts, cam_intr):
@@ -40,7 +46,6 @@ def compute_projected_pts_tensor(pts, cam_intr):
     return projected_pts
 
 
-
 def compute_visibility_mask_tensor(pts, projected_pts, depth_im, depth_thresh=0.005):
     # compare z in camera coordinates and depth image
     # to check if there projected points are visible
@@ -48,38 +53,236 @@ def compute_visibility_mask_tensor(pts, projected_pts, depth_im, depth_thresh=0.
 
     visibility_mask = np.zeros(projected_pts.shape[0]).astype(np.bool8)
     inbounds = (
-        (projected_pts[:, 0] >= 0) &
-        (projected_pts[:, 0] < im_w) &
-        (projected_pts[:, 1] >= 0) &
-        (projected_pts[:, 1] < im_h)
-    )   # (N,)
+        (projected_pts[:, 0] >= 0)
+        & (projected_pts[:, 0] < im_w)
+        & (projected_pts[:, 1] >= 0)
+        & (projected_pts[:, 1] < im_h)
+    )  # (N,)
     projected_pts = projected_pts[inbounds]  # (X, 2)
-    depth_check = (
-        depth_im[projected_pts[:, 1], projected_pts[:, 0]] != 0
-    ) & (
+    depth_check = (depth_im[projected_pts[:, 1], projected_pts[:, 0]] != 0) & (
         np.abs(pts[inbounds][:, 2] - depth_im[projected_pts[:, 1], projected_pts[:, 0]])
         < depth_thresh
     )
 
     visibility_mask[inbounds] = depth_check
-    return visibility_mask # (N,)
+    return visibility_mask  # (N,)
 
 
-
-def compute_visible_masked_pts_tensor(scene_pts, projected_pts, visibility_mask, pred_masks):
+def compute_visible_masked_pts_tensor(
+    scene_pts, projected_pts, visibility_mask, pred_masks
+):
     # return masked 3d points
     N = scene_pts.shape[0]
     M, _, _ = pred_masks.shape  # (M, H, W)
     # print("DEBUG M value", M)
     masked_pts = np.zeros((M, N), dtype=np.bool_)
-    visiable_pts = projected_pts[visibility_mask] # (X, 2)
+    visiable_pts = projected_pts[visibility_mask]  # (X, 2)
     for m in range(M):
-        x, y = visiable_pts.T # (X,)
-        mask_check = pred_masks[m, y, x] # (X,)
+        x, y = visiable_pts.T  # (X,)
+        mask_check = pred_masks[m, y, x]  # (X,)
         masked_pts[m, visibility_mask] = mask_check
-    
+
     return masked_pts
 
+
+"""
+2. Aggregating 3d masks
+"""
+
+
+def aggregate(
+    backprojected_3d_masks: dict, iou_threshold=0.25, feature_similarity_threshold=0.75
+) -> dict:
+    """
+    calculate iou
+    calculate feature similarity
+
+    if iou >= threshold and feature similarity >= threshold:
+        aggregate
+    else:
+        create new mask
+    """
+    labels = backprojected_3d_masks["final_class"]  # List[str]
+    semantic_matrix = calculate_feature_similarity(labels)
+
+    ins_masks = backprojected_3d_masks["ins"].to(device)  # (Ins, N)
+    iou_matrix = calculate_iou(ins_masks)
+
+    confidences = backprojected_3d_masks["conf"].to(device)  # (Ins, )
+
+    merge_matrix = semantic_matrix & (
+        iou_matrix > iou_threshold
+    )  # dtype: bool (Ins, Ins)
+
+    # aggregate masks with high iou
+    (
+        aggregated_masks,
+        aggregated_confidences,
+        aggregated_labels,
+        mask_indeces_to_be_merged,
+    ) = merge_masks(ins_masks, confidences, labels, merge_matrix)
+
+    # solve overlapping
+    final_masks = solve_overlapping(
+        aggregated_masks, aggregated_labels, mask_indeces_to_be_merged
+    )
+
+    return {
+        "ins": final_masks,  # torch.tensor (Ins, N)
+        "conf": aggregated_confidences,  # torch.tensor (Ins, )
+        "final_class": aggregated_labels,  # List[str] (Ins,)
+    }
+
+
+def calculate_iou(ins_masks: torch.Tensor) -> torch.Tensor:
+    """calculate iou between all masks
+
+    args:
+        ins_masks: torch.tensor (Ins, N)
+
+    return:
+        iou_matrix: torch.tensor (Ins, Ins)
+    """
+    ins_masks = ins_masks.float()
+    intersection = torch.matmul(ins_masks, ins_masks.T)  # (Ins, Ins)
+    union = (
+        torch.sum(ins_masks, dim=1).unsqueeze(1)
+        + torch.sum(ins_masks, dim=1).unsqueeze(0)
+        - intersection
+    )
+    iou_matrix = intersection / union
+    return iou_matrix
+
+
+def calculate_feature_similarity(labels: list[str]) -> torch.Tensor:
+    """calculate feature similarity between all masks
+
+    args:
+        labels: list[str]
+
+    return:
+        feature_similarity_matrix: torch.tensor (Ins, Ins)
+    """  # TODO: add clip feature similarity
+    feature_similarity_matrix = torch.zeros(len(labels), len(labels), device=device)
+    for i in range(len(labels)):
+        for j in range(i, len(labels)):
+            if labels[i] == labels[j]:
+                feature_similarity_matrix[i, j] = 1
+                feature_similarity_matrix[j, i] = 1
+
+    # convert to boolean
+    feature_similarity_matrix = feature_similarity_matrix.bool()
+    return feature_similarity_matrix
+
+
+def merge_masks(
+    ins_masks: torch.Tensor,
+    confidences: torch.Tensor,
+    labels: list[str],
+    merge_matrix: torch.Tensor,
+) -> tuple[torch.Tensor, torch.Tensor, list[str], list[list[int]]]:
+
+    # find masks to be merged
+    merge_matrix = merge_matrix.float()
+    mask_indeces_to_be_merged = find_unconnected_subgraphs_tensor(merge_matrix)
+    print("masks_to_be_merged", mask_indeces_to_be_merged)
+
+    # merge masks
+    aggregated_masks = []
+    aggregated_confidences = []
+    aggregated_labels = []
+    for mask_indeces in mask_indeces_to_be_merged:
+
+        if mask_indeces == []:
+            continue
+
+        mask = torch.zeros(ins_masks.shape[1], dtype=torch.bool, device=device)
+        conf = []
+        for index in mask_indeces:
+            mask |= ins_masks[index]
+            conf.append(confidences[index])
+        aggregated_masks.append(mask)
+        aggregated_confidences.append(sum(conf) / len(conf))
+        aggregated_labels.append(labels[mask_indeces[0]])
+
+    # convert type
+    aggregated_masks = torch.stack(aggregated_masks)  # (Ins, N)
+    aggregated_confidences = torch.tensor(aggregated_confidences)  # (Ins, )
+
+    return (
+        aggregated_masks,
+        aggregated_confidences,
+        aggregated_labels,
+        mask_indeces_to_be_merged,
+    )
+
+
+def find_unconnected_subgraphs_tensor(adj_matrix: torch.Tensor) -> list[list[int]]:
+    num_nodes = adj_matrix.size(0)
+    # Create an identity matrix for comparison
+    identity = torch.eye(num_nodes, dtype=torch.float32)
+    # Start with the adjacency matrix itself
+    reachability_matrix = adj_matrix.clone()
+
+    # Repeat matrix multiplication to propagate connectivity
+    for _ in range(num_nodes):
+        reachability_matrix = torch.matmul(reachability_matrix, adj_matrix) + adj_matrix
+        reachability_matrix = torch.clamp(reachability_matrix, 0, 1)
+
+    # Identify unique connected components
+    components = []
+    visited = torch.zeros(num_nodes, dtype=torch.bool)
+    for i in range(num_nodes):
+        if not visited[i]:
+            component_mask = reachability_matrix[i] > 0
+            component = torch.nonzero(component_mask, as_tuple=False).squeeze().tolist()
+            # Ensure component is a list even if it's a single element
+            component = [component] if isinstance(component, int) else component
+            components.append(component)
+            visited[component_mask] = True
+
+    return components
+
+
+def solve_overlapping(
+    aggregated_masks: torch.Tensor,
+    aggregated_labels: dict[str],
+    mask_indeces_to_be_merged: list[list[int]],
+) -> torch.Tensor:
+    """
+    solve overlapping among all masks
+    """
+    # number of aggrated inital masks in each aggregated mask
+    num_masks = [len(mask_indeces) for mask_indeces in mask_indeces_to_be_merged]
+
+    # find overlapping masks in aggregated_masks
+    overlapping_masks = []
+    for i in range(len(aggregated_masks)):
+        for j in range(i + 1, len(aggregated_masks)):
+            if (
+                torch.any(aggregated_masks[i] & aggregated_masks[j])
+                and aggregated_labels[i] == aggregated_labels[j]
+            ):
+                overlapping_masks.append((i, j))
+
+    # only keep overlapped points for masks aggregated from more masks
+    for i, j in overlapping_masks:
+        if num_masks[i] > num_masks[j]:
+            aggregated_masks[j] &= ~aggregated_masks[i]
+        else:
+            aggregated_masks[i] &= ~aggregated_masks[j]
+
+    return aggregated_masks
+
+
+"""
+3. Filtering 3d masks
+"""  # TODO: rewrite filtering in __main__ to a function here
+
+
+"""
+*: Help functions
+"""
 
 
 def get_parser():
@@ -126,18 +329,27 @@ if __name__ == "__main__":
 
     # 2d sam masks
     # annotated_frame, segmented_frame_masks = inference_grounded_sam()
-    masks_2d_path = os.path.join(mask_2d_dir, f"{scene_id}.pth")
+    masks_2d_path = os.path.join(mask_2d_dir, cfg.base_prompt, f"{scene_id}.pth")
     gronded_sam_results = torch.load(masks_2d_path)
 
     masked_counts = torch.zeros(scene_pcd.shape[1]).to(
         device=device
     )  # scene_pcd has shape (4, N)
-    masks_3d = {}
+
+    # 3d mask aggregation
+    backprojected_3d_masks = {
+        "ins": [],  # (Ins, N)
+        "conf": [],  # (Ins, )
+        "final_class": [],  # (Ins,)
+    }
+
     for i in range(len(gronded_sam_results)):  # range(35,40):
 
         frame_id = gronded_sam_results[i]["frame_id"][:-4]
         print("-------------------------frame", frame_id, "-------------------------")
         segmented_frame_masks = gronded_sam_results[i]["segmented_frame_masks"]
+        confidences = gronded_sam_results[i]["confidences"]
+        labels = gronded_sam_results[i]["labels"]
 
         pred_masks = segmented_frame_masks.squeeze(dim=1).numpy()  # (M, H, W)
         cam_pose = np.loadtxt(os.path.join(cam_pose_dir, f"{frame_id}.txt"))
@@ -164,8 +376,7 @@ if __name__ == "__main__":
             scene_pts, projected_pts, visibility_mask, pred_masks
         )
 
-
-        masked_pts = torch.from_numpy(masked_pts).to(device)
+        masked_pts = torch.from_numpy(masked_pts).to(device)  # (M, N)
         mask_area = torch.sum(masked_pts, dim=1).detach().cpu().numpy()  # (M,)
         print(
             "number of 3d mask points:",
@@ -174,12 +385,31 @@ if __name__ == "__main__":
             pred_masks.sum(axis=(1, 2)),
         )
 
+        for i in range(masked_pts.shape[0]):
+            backprojected_3d_masks["ins"].append(masked_pts[i])
+            backprojected_3d_masks["conf"].append(confidences[i])
+            backprojected_3d_masks["final_class"].append(labels[i])
+
         for mask in masked_pts:
             # print("single_mask shape", mask.shape, "all mask shape", masked_counts.shape)
             masked_counts[mask] += 1
 
+    # convert each value in backprojected_3d_masks to tensor
+    backprojected_3d_masks["ins"] = torch.stack(
+        backprojected_3d_masks["ins"], dim=0
+    )  # (Ins, N)
+    backprojected_3d_masks["conf"] = torch.tensor(
+        backprojected_3d_masks["conf"]
+    )  # (Ins,)
 
-    ## Start filtering
+    """Aggregating 3d masks"""
+    backprojected_3d_masks = aggregate(
+        backprojected_3d_masks,
+        iou_threshold=cfg.iou_thres,
+        feature_similarity_threshold=cfg.similarity_thres,
+    )
+
+    """Filtering 3d masks"""
     if cfg.if_occurance_threshold:
         occurance_counts = masked_counts.unique()
         print("occurance count", masked_counts.unique())
@@ -192,19 +422,29 @@ if __name__ == "__main__":
         # remove all the points under median occurance
         masked_counts[masked_counts < occurance_thres_value] = 0
 
-    elif cfg.if_detected_ratio_threshold: #!PROBLEM: this leaves small and uncontiguous mask!
+    elif cfg.if_detected_ratio_threshold:
         scene_id = cfg.scene_id
         root_dir = cfg.root_dir
         image_dir = os.path.join(root_dir, scene_id, "color")
 
-        image_files = [f for f in os.listdir(image_dir) if f.endswith('.jpg')]
-        image_files.sort(key=lambda x: int(x.split('.')[0]))         # sort numerically, 1.jpg, 2.jpg, 3.jpg ...
-        downsampled_image_files = image_files[::10]                  # get one image every 10 frames
-        downsampled_images_paths = [os.path.join(image_dir, f) for f in downsampled_image_files]
+        image_files = [f for f in os.listdir(image_dir) if f.endswith(".jpg")]
+        image_files.sort(
+            key=lambda x: int(x.split(".")[0])
+        )  # sort numerically, 1.jpg, 2.jpg, 3.jpg ...
+        downsampled_image_files = image_files[::10]  # get one image every 10 frames
+        downsampled_images_paths = [
+            os.path.join(image_dir, f) for f in downsampled_image_files
+        ]
 
         viewed_counts = torch.zeros(scene_pcd.shape[1]).to(device=device)
-        for i, image_path in enumerate(tqdm(downsampled_images_paths, desc="Calculating viewed counts for every point", leave=False)):
-            frame_id = image_path.split('/')[-1][:-4]
+        for i, image_path in enumerate(
+            tqdm(
+                downsampled_images_paths,
+                desc="Calculating viewed counts for every point",
+                leave=False,
+            )
+        ):
+            frame_id = image_path.split("/")[-1][:-4]
             cam_pose = np.loadtxt(os.path.join(cam_pose_dir, f"{frame_id}.txt"))
 
             scene_pts = copy.deepcopy(scene_pcd)
@@ -220,7 +460,9 @@ if __name__ == "__main__":
                 cv2.imread(depth_im_path, cv2.IMREAD_UNCHANGED).astype(np.float32)
                 / depth_scale
             )
-            depth_im = cv2.resize(depth_im, (photo_width, photo_height))  # Width x Height
+            depth_im = cv2.resize(
+                depth_im, (photo_width, photo_height)
+            )  # Width x Height
             visibility_mask = compute_visibility_mask_tensor(
                 scene_pts, projected_pts, depth_im, depth_thresh=0.08
             )
@@ -228,26 +470,44 @@ if __name__ == "__main__":
 
         # only calculate non-zero viewed counts
         print("viewed_counts", viewed_counts.unique())
-        detected_ratio = masked_counts / (viewed_counts+1) # avoid /0
+        detected_ratio = masked_counts / (viewed_counts + 1)  # avoid /0
         print("detected_ratio", detected_ratio.unique())
         detected_ratio_thres = cfg.detected_ratio_threshold
-        detected_ratio_thres_value = detected_ratio.unique()[round(detected_ratio_thres * detected_ratio.unique().shape[0])]
+        detected_ratio_thres_value = detected_ratio.unique()[
+            round(detected_ratio_thres * detected_ratio.unique().shape[0])
+        ]
         print("detected_ratio_thres_value", detected_ratio_thres_value)
         masked_counts[detected_ratio < detected_ratio_thres_value] = 0
 
+    masked_points = masked_counts > 0  # shape (N,)
+    print("final masked points", masked_points.sum())
 
+    # convert each value in backprojected_3d_masks to tensor
+    backprojected_3d_masks["ins"] = backprojected_3d_masks["ins"]  # (Ins, N)
+    backprojected_3d_masks["conf"] = backprojected_3d_masks["conf"]  # (Ins,)
 
+    # apply filtering on backprojected_3d_masks["ins"]
+    print("before filtering", backprojected_3d_masks["ins"].shape)
+    num_ins_points_before_filtering = backprojected_3d_masks["ins"].sum(dim=1)  # (Ins,)
+    backprojected_3d_masks["ins"] &= masked_points.unsqueeze(0)  # (Ins, N)
+    num_ins_points_after_filtering = backprojected_3d_masks["ins"].sum(dim=1)  # (Ins,)
+    print("num_ins_points_before_filtering", num_ins_points_before_filtering)
+    # print(" num of points being filtered in each mask", num_ins_points_before_filtering-num_insgi_points_after_filtering)
 
+    # delete the masks with less than 1/2 points after filtering and have more than 50 points
+    backprojected_3d_masks["ins"] = backprojected_3d_masks["ins"][
+        (num_ins_points_after_filtering > cfg.remove_small_masks)
+        & (
+            num_ins_points_after_filtering
+            > cfg.remove_filtered_masks * num_ins_points_before_filtering
+        )
+    ]
+    print("after filtering", backprojected_3d_masks["ins"].shape)
+    print("num_ins_points_after_filtering", backprojected_3d_masks["ins"].sum(dim=1))
 
-    masked_counts = masked_counts > 0
-    print("final masked points", masked_counts.sum())
-
+    # save the backprojected_3d_masks
     os.makedirs(os.path.join(cfg.mask_3d_dir, cfg.base_prompt), exist_ok=True)
     torch.save(
-        {
-            "ins": masked_counts.unsqueeze(0),
-            "conf": torch.tensor([0.36]),
-            "final_class": torch.tensor([30]),
-        },
+        backprojected_3d_masks,
         os.path.join(cfg.mask_3d_dir, cfg.base_prompt, f"{scene_id}.pth"),
     )
