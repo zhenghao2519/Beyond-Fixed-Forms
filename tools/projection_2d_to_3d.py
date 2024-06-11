@@ -91,8 +91,8 @@ def compute_visible_masked_pts_tensor(
 
 
 def aggregate(
-    backprojected_3d_masks, iou_threshold=0.25, feature_similarity_threshold=0.75
-):
+    backprojected_3d_masks: dict, iou_threshold=0.25, feature_similarity_threshold=0.75
+) -> dict:
     """
     calculate iou
     calculate feature similarity
@@ -120,7 +120,7 @@ def aggregate(
         aggregated_confidences,
         aggregated_labels,
         mask_indeces_to_be_merged,
-    ) = merge_masks(ins_masks, confidences, labels, merge_matrix, iou_threshold)
+    ) = merge_masks(ins_masks, confidences, labels, merge_matrix)
 
     # solve overlapping
     final_masks = solve_overlapping(
@@ -134,7 +134,7 @@ def aggregate(
     }
 
 
-def calculate_iou(ins_masks):
+def calculate_iou(ins_masks: torch.Tensor) -> torch.Tensor:
     """calculate iou between all masks
 
     args:
@@ -154,7 +154,7 @@ def calculate_iou(ins_masks):
     return iou_matrix
 
 
-def calculate_feature_similarity(labels: list[str]):
+def calculate_feature_similarity(labels: list[str]) -> torch.Tensor:
     """calculate feature similarity between all masks
 
     args:
@@ -179,9 +179,8 @@ def merge_masks(
     ins_masks: torch.Tensor,
     confidences: torch.Tensor,
     labels: list[str],
-    merge_matrix,
-    iou_threshold,
-):
+    merge_matrix: torch.Tensor,
+) -> tuple[torch.Tensor, torch.Tensor, list[str], list[list[int]]]:
 
     # find masks to be merged
     merge_matrix = merge_matrix.float()
@@ -218,7 +217,7 @@ def merge_masks(
     )
 
 
-def find_unconnected_subgraphs_tensor(adj_matrix):
+def find_unconnected_subgraphs_tensor(adj_matrix: torch.Tensor) -> list[list[int]]:
     num_nodes = adj_matrix.size(0)
     # Create an identity matrix for comparison
     identity = torch.eye(num_nodes, dtype=torch.float32)
@@ -245,7 +244,11 @@ def find_unconnected_subgraphs_tensor(adj_matrix):
     return components
 
 
-def solve_overlapping(aggregated_masks, aggregated_labels, mask_indeces_to_be_merged):
+def solve_overlapping(
+    aggregated_masks: torch.Tensor,
+    aggregated_labels: dict[str],
+    mask_indeces_to_be_merged: list[list[int]],
+) -> torch.Tensor:
     """
     solve overlapping among all masks
     """
