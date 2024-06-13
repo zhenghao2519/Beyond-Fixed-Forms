@@ -5,46 +5,45 @@ from typing import List, Tuple
 from torch import nn
 import torch.nn.functional as F
 from descriptor_generator import toy_descriptors, generate_descriptors_waffle, generate_descriptors_gpt, generate_descriptors_waffle_and_gpt
-from ..pretrained.GroundingDINO.groundingdino.models.GroundingDINO.transformer import Transformer, build_transformer
-from ..pretrained.GroundingDINO.groundingdino.models.GroundingDINO import GroundingDINO
-from ..pretrained.GroundingDINO.groundingdino.util.utils import get_phrases_from_posmap
-from ..pretrained.GroundingDINO.groundingdino.util.inference import predict, preprocess_caption, Model
-from ..pretrained.GroundingDINO.groundingdino.util import box_ops, get_tokenlizer
-from ..pretrained.GroundingDINO.groundingdino.models.GroundingDINO.bertwarper import (
+from groundingdino.models.GroundingDINO.transformer import Transformer, build_transformer
+from groundingdino.util.utils import get_phrases_from_posmap
+from groundingdino.util.inference import predict, preprocess_caption, Model
+from groundingdino.util import box_ops, get_tokenlizer
+from groundingdino.models.GroundingDINO.bertwarper import (
     BertModelWarper,
     generate_masks_with_special_tokens,
     generate_masks_with_special_tokens_and_transfer_map,
 )
-from ..pretrained.GroundingDINO.groundingdino.util.misc import (
+from groundingdino.util.misc import (
     NestedTensor,
     inverse_sigmoid,
     nested_tensor_from_tensor_list,
 )
-from ..pretrained.GroundingDINO.groundingdino.models.GroundingDINO.utils import MLP, ContrastiveEmbed
+from groundingdino.models.GroundingDINO.utils import MLP, ContrastiveEmbed
 from transformers import AutoTokenizer, BertModel, BertTokenizer
 
 
 def predict_extended(
     model, 
-    backbone: nn.Module,
-    tansformer: Transformer,
+    # backbone: nn.Module,
+    # tansformer: Transformer,
     image: torch.Tensor, 
-    base_prompt: str,            # TODO(perhaps): or list of strings, e.g. ['jeans', 'bag on the table', 'book']
+    base_prompt: str,  # only one object # TODO(perhaps): or list of strings, e.g. ['jeans', 'bag on the table', 'book']
     box_threshold: float, 
     text_threshold: float, 
     device: str = "cuda", 
     prompt_extender: str = None,
-    hidden_dim: int = 256,
-    max_text_len: int = 195,
-    num_feature_levels: int = 1,
-    two_stage_type: str = "no",
-    # two stage
-    dec_pred_bbox_embed_share=True,
-    two_stage_class_embed_share=True,
-    two_stage_bbox_embed_share=True,
-    text_encoder_type: str = "bert-base-uncased",
-    sub_sentence_present: bool = True,
-    **kwargs
+    # hidden_dim: int = 256,
+    # max_text_len: int = 195,
+    # num_feature_levels: int = 1,
+    # two_stage_type: str = "no",
+    # # two stage
+    # dec_pred_bbox_embed_share=True,
+    # two_stage_class_embed_share=True,
+    # two_stage_bbox_embed_share=True,
+    # text_encoder_type: str = "bert-base-uncased",
+    # sub_sentence_present: bool = True,
+    # **kwargs
 ) -> Tuple[torch.Tensor, torch.Tensor, List[str]]:
     '''
     Adapt grounding dino inference to predict bounding boxes and phrases with optional extended captions
@@ -56,76 +55,76 @@ def predict_extended(
     - logits: torch.Tensor of shape (N, 2) containing the logits
     - phrases: List of strings containing the phrases
     '''
-    # classes = [base_prompt]
-    transformer = build_transformer(model.args)
+    # # classes = [base_prompt]
+    # transformer = build_transformer(model.args)
 
-    # load bert
-    bert = get_tokenlizer.get_pretrained_language_model(text_encoder_type)
-    bert.pooler.dense.weight.requires_grad_(False)
-    bert.pooler.dense.bias.requires_grad_(False)
-    bert = BertModelWarper(bert_model=bert)
-    tokenizer = BertModel.from_pretrained(text_encoder_type)
+    # # load bert
+    # bert = get_tokenlizer.get_pretrained_language_model(text_encoder_type)
+    # bert.pooler.dense.weight.requires_grad_(False)
+    # bert.pooler.dense.bias.requires_grad_(False)
+    # bert = BertModelWarper(bert_model=bert)
+    # tokenizer = BertModel.from_pretrained(text_encoder_type)
 
-    feat_map = nn.Linear(bert.config.hidden_size, hidden_dim, bias=True)
-    nn.init.constant_(feat_map.bias.data, 0)
-    nn.init.xavier_uniform_(feat_map.weight.data)
+    # feat_map = nn.Linear(bert.config.hidden_size, hidden_dim, bias=True)
+    # nn.init.constant_(feat_map.bias.data, 0)
+    # nn.init.xavier_uniform_(feat_map.weight.data)
 
-    # special tokens
-    special_tokens = tokenizer.convert_tokens_to_ids(["[CLS]", "[SEP]", ".", "?"])
+    # # special tokens
+    # special_tokens = tokenizer.convert_tokens_to_ids(["[CLS]", "[SEP]", ".", "?"])
 
-     # prepare input projection layers
-    if num_feature_levels > 1:
-        num_backbone_outs = len(backbone.num_channels)
-        input_proj_list = []
-        for _ in range(num_backbone_outs):
-            in_channels = backbone.num_channels[_]
-            input_proj_list.append(
-                nn.Sequential(
-                    nn.Conv2d(in_channels, hidden_dim, kernel_size=1),
-                    nn.GroupNorm(32, hidden_dim),
-                )
-            )
-        for _ in range(num_feature_levels - num_backbone_outs):
-            input_proj_list.append(
-                nn.Sequential(
-                    nn.Conv2d(in_channels, hidden_dim, kernel_size=3, stride=2, padding=1),
-                    nn.GroupNorm(32, hidden_dim),
-                )
-            )
-            in_channels = hidden_dim
-        input_proj = nn.ModuleList(input_proj_list)
-    else:
-        assert two_stage_type == "no", "two_stage_type should be no if num_feature_levels=1 !!!"
-        input_proj = nn.ModuleList(
-            [
-                nn.Sequential(
-                    nn.Conv2d(backbone.num_channels[-1], hidden_dim, kernel_size=1),
-                    nn.GroupNorm(32, hidden_dim),
-                )
-            ]
-        )
-    # prepare class & box embed
-    _class_embed = ContrastiveEmbed()
-    _bbox_embed = MLP(hidden_dim, hidden_dim, 4, 3)
-    nn.init.constant_(_bbox_embed.layers[-1].weight.data, 0)
-    nn.init.constant_(_bbox_embed.layers[-1].bias.data, 0)
+    #  # prepare input projection layers
+    # if num_feature_levels > 1:
+    #     num_backbone_outs = len(backbone.num_channels)
+    #     input_proj_list = []
+    #     for _ in range(num_backbone_outs):
+    #         in_channels = backbone.num_channels[_]
+    #         input_proj_list.append(
+    #             nn.Sequential(
+    #                 nn.Conv2d(in_channels, hidden_dim, kernel_size=1),
+    #                 nn.GroupNorm(32, hidden_dim),
+    #             )
+    #         )
+    #     for _ in range(num_feature_levels - num_backbone_outs):
+    #         input_proj_list.append(
+    #             nn.Sequential(
+    #                 nn.Conv2d(in_channels, hidden_dim, kernel_size=3, stride=2, padding=1),
+    #                 nn.GroupNorm(32, hidden_dim),
+    #             )
+    #         )
+    #         in_channels = hidden_dim
+    #     input_proj = nn.ModuleList(input_proj_list)
+    # else:
+    #     assert two_stage_type == "no", "two_stage_type should be no if num_feature_levels=1 !!!"
+    #     input_proj = nn.ModuleList(
+    #         [
+    #             nn.Sequential(
+    #                 nn.Conv2d(backbone.num_channels[-1], hidden_dim, kernel_size=1),
+    #                 nn.GroupNorm(32, hidden_dim),
+    #             )
+    #         ]
+    #     )
+    # # prepare class & box embed
+    # _class_embed = ContrastiveEmbed()
+    # _bbox_embed = MLP(hidden_dim, hidden_dim, 4, 3)
+    # nn.init.constant_(_bbox_embed.layers[-1].weight.data, 0)
+    # nn.init.constant_(_bbox_embed.layers[-1].bias.data, 0)
 
-    if dec_pred_bbox_embed_share:
-        box_embed_layerlist = [_bbox_embed for i in range(transformer.num_decoder_layers)]
-    else:
-        box_embed_layerlist = [copy.deepcopy(_bbox_embed) for i in range(transformer.num_decoder_layers)]
-    class_embed_layerlist = [_class_embed for i in range(transformer.num_decoder_layers)]
-    bbox_embed = nn.ModuleList(box_embed_layerlist)
-    class_embed = nn.ModuleList(class_embed_layerlist)
-    transformer.decoder.bbox_embed = bbox_embed
-    transformer.decoder.class_embed = class_embed
+    # if dec_pred_bbox_embed_share:
+    #     box_embed_layerlist = [_bbox_embed for i in range(transformer.num_decoder_layers)]
+    # else:
+    #     box_embed_layerlist = [copy.deepcopy(_bbox_embed) for i in range(transformer.num_decoder_layers)]
+    # class_embed_layerlist = [_class_embed for i in range(transformer.num_decoder_layers)]
+    # bbox_embed = nn.ModuleList(box_embed_layerlist)
+    # class_embed = nn.ModuleList(class_embed_layerlist)
+    # transformer.decoder.bbox_embed = bbox_embed
+    # transformer.decoder.class_embed = class_embed
 
     # Generate extended captions based on different methods
-    descriptotors = None
+    descriptors = None
     if prompt_extender is None:
-        descriptors = ['']
+        descriptors_structured = ['']
     elif prompt_extender == "toy":
-        descriptors = toy_descriptors(base_prompt)
+        descriptors_structured = toy_descriptors(base_prompt)
     # elif caption_extender == "waffle":
     #     captions = generate_descriptors_waffle(caption)
     # elif caption_extender == "gpt":
@@ -136,7 +135,8 @@ def predict_extended(
         raise ValueError(f"Unknown caption extender: {prompt_extender}")
     
     # Preprocess captions
-    captions = [f"{base_prompt}, {descriptor}" for descriptor in descriptors]
+    captions = descriptors_structured
+    # print("Captions: ", captions)
     captions = [preprocess_caption(caption) for caption in captions]
     
     model = model.to(device)
@@ -155,24 +155,24 @@ def predict_extended(
 
         # encoder texts
         for caption in captions:
-            capt = [caption] #['jeans, that has a zipper.']
+            capt = [caption] #e.g., ['jeans, which has a zipper.']
         
-            tokenized = tokenizer(capt, padding="longest", return_tensors="pt").to(samples.device)
+            tokenized = model.tokenizer(capt, padding="max_length", return_tensors="pt").to(samples.device)
             
             (   text_self_attention_masks,
                 position_ids,
                 cate_to_token_mask_list,
-            ) = generate_masks_with_special_tokens_and_transfer_map(tokenized, special_tokens, tokenizer)
+            ) = generate_masks_with_special_tokens_and_transfer_map(tokenized, model.specical_tokens, model.tokenizer)
 
-            if text_self_attention_masks.shape[1] > max_text_len:
-                text_self_attention_masks = text_self_attention_masks[:, : max_text_len, : max_text_len]
-                position_ids = position_ids[:, : max_text_len]
-                tokenized["input_ids"] = tokenized["input_ids"][:, : max_text_len]
-                tokenized["attention_mask"] = tokenized["attention_mask"][:, : max_text_len]
-                tokenized["token_type_ids"] = tokenized["token_type_ids"][:, : max_text_len]
+            if text_self_attention_masks.shape[1] > model.max_text_len:
+                text_self_attention_masks = text_self_attention_masks[:, : model.max_text_len, : model.max_text_len]
+                position_ids = position_ids[:, : model.max_text_len]
+                tokenized["input_ids"] = tokenized["input_ids"][:, : model.max_text_len]
+                tokenized["attention_mask"] = tokenized["attention_mask"][:, : model.max_text_len]
+                tokenized["token_type_ids"] = tokenized["token_type_ids"][:, : model.max_text_len]
 
                 # extract text embeddings
-            if sub_sentence_present:
+            if model.sub_sentence_present:
                 tokenized_for_encoder = {k: v for k, v in tokenized.items() if k != "attention_mask"}
                 tokenized_for_encoder["attention_mask"] = text_self_attention_masks
                 tokenized_for_encoder["position_ids"] = position_ids
@@ -180,29 +180,35 @@ def predict_extended(
                 # import ipdb; ipdb.set_trace()
                 tokenized_for_encoder = tokenized
 
-                bert_output = bert(**tokenized_for_encoder)                # bs, 195, 768
+            bert_output = model.bert(**tokenized_for_encoder)                # bs, 195, 768
 
-                encoded_text = feat_map(bert_output["last_hidden_state"])  # bs, 195, d_model
-                text_token_mask = tokenized.attention_mask.bool()  # bs, 195
-                # text_token_mask: True for nomask, False for mask
-                # text_self_attention_masks: True for nomask, False for mask
+            encoded_text = model.feat_map(bert_output["last_hidden_state"])  # bs, 195, d_model
+            text_token_mask = tokenized.attention_mask.bool()  # bs, 195
+            # text_token_mask: True for nomask, False for mask
+            # text_self_attention_masks: True for nomask, False for mask
+            # print("====================DEBUG" , encoded_text.shape, text_token_mask.shape, position_ids.shape, text_self_attention_masks.shape)
 
-                if encoded_text.shape[1] > max_text_len:
-                    encoded_text = encoded_text[:, : max_text_len, :]
-                    text_token_mask = text_token_mask[:, : max_text_len]
-                    position_ids = position_ids[:, : max_text_len]
-                    text_self_attention_masks = text_self_attention_masks[:, : max_text_len, : max_text_len]
+            if encoded_text.shape[1] > model.max_text_len:
+                encoded_text = encoded_text[:, : model.max_text_len, :]
+                text_token_mask = text_token_mask[:, : model.max_text_len]
+                position_ids = position_ids[:, : model.max_text_len]
+                text_self_attention_masks = text_self_attention_masks[:, : model.max_text_len, : model.max_text_len]
 
             all_encoded_text.append(encoded_text)
             all_text_token_mask.append(text_token_mask)
             all_position_ids.append(position_ids)
             all_text_self_attention_masks.append(text_self_attention_masks)
+            # print(text_self_attention_masks)
+            
 
         # Stack all the encoded texts, masks, etc.
-        encoded_text = torch.cat(all_encoded_text, dim=0)
-        text_token_mask = torch.cat(all_text_token_mask, dim=0)
-        position_ids = torch.cat(all_position_ids, dim=0)
-        text_self_attention_masks = torch.cat(all_text_self_attention_masks, dim=0)
+        encoded_text = torch.cat(all_encoded_text, dim=0).mean(dim=0, keepdim=True)
+        text_token_mask = torch.cat(all_text_token_mask, dim=0).max(dim=0, keepdim = True).values
+        position_ids = torch.cat(all_position_ids, dim=0).max(dim=0, keepdim = True).values
+        text_self_attention_masks = torch.cat(all_text_self_attention_masks, dim=0).max(dim=0, keepdim = True).values
+
+        # print("==========outer==========DEBUG" , encoded_text.shape, text_token_mask.shape, position_ids.shape, text_self_attention_masks.shape)
+        # print(text_token_mask, position_ids)
 
         text_dict = {
             "encoded_text": encoded_text,  # bs, 195, d_model
@@ -215,38 +221,38 @@ def predict_extended(
 
         if isinstance(samples, (list, torch.Tensor)):
             samples = nested_tensor_from_tensor_list(samples)
-        features, poss = backbone(samples)
+        features, poss = model.backbone(samples)
 
         srcs = []
         masks = []
         for l, feat in enumerate(features):
             src, mask = feat.decompose()
-            srcs.append(input_proj[l](src))
+            srcs.append(model.input_proj[l](src))
             masks.append(mask)
             assert mask is not None
-        if num_feature_levels > len(srcs):
+        if model.num_feature_levels > len(srcs):
             _len_srcs = len(srcs)
-            for l in range(_len_srcs, num_feature_levels):
+            for l in range(_len_srcs, model.num_feature_levels):
                 if l == _len_srcs:
-                    src = input_proj[l](features[-1].tensors)
+                    src = model.input_proj[l](features[-1].tensors)
                 else:
-                    src = input_proj[l](srcs[-1])
+                    src = model.input_proj[l](srcs[-1])
                 m = samples.mask
                 mask = F.interpolate(m[None].float(), size=src.shape[-2:]).to(torch.bool)[0]
-                pos_l = backbone[1](NestedTensor(src, mask)).to(src.dtype)
+                pos_l = model.backbone[1](NestedTensor(src, mask)).to(src.dtype)
                 srcs.append(src)
                 masks.append(mask)
                 poss.append(pos_l)
 
         input_query_bbox = input_query_label = attn_mask = dn_meta = None
-        hs, reference, hs_enc, ref_enc, init_box_proposal = GroundingDINO.transformer(
+        hs, reference, hs_enc, ref_enc, init_box_proposal = model.transformer(
             srcs, masks, input_query_bbox, poss, input_query_label, attn_mask, text_dict
         )
 
         # deformable-detr-like anchor update
         outputs_coord_list = []
         for dec_lid, (layer_ref_sig, layer_bbox_embed, layer_hs) in enumerate(
-            zip(reference[:-1], bbox_embed, hs)
+            zip(reference[:-1], model.bbox_embed, hs)
         ):
             layer_delta_unsig = layer_bbox_embed(layer_hs)
             layer_outputs_unsig = layer_delta_unsig + inverse_sigmoid(layer_ref_sig)
@@ -256,7 +262,7 @@ def predict_extended(
 
         # output
         outputs_class = torch.stack(
-            [layer_cls_embed(layer_hs, text_dict) for layer_cls_embed, layer_hs in zip(class_embed, hs)]
+            [layer_cls_embed(layer_hs, text_dict) for layer_cls_embed, layer_hs in zip(model.class_embed, hs)]
         )
         outputs = {"pred_logits": outputs_class[-1], "pred_boxes": outputs_coord_list[-1]}
 
@@ -268,7 +274,7 @@ def predict_extended(
     boxes = prediction_boxes[mask]  # boxes.shape = (n, 4)
 
     tokenizer = model.tokenizer
-    tokenized = tokenizer(caption)
+    tokenized = tokenizer(base_prompt)
 
     phrases = [
         get_phrases_from_posmap(logit > text_threshold, tokenized, tokenizer).replace(".", "") for logit in logits

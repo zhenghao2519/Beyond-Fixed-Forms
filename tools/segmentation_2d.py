@@ -27,6 +27,8 @@ from configs import config
 from munch import Munch
 import requests
 
+from predict_extended import predict_extended
+
 device = torch.device(
     "cuda"
     if torch.cuda.is_available()
@@ -95,13 +97,22 @@ def detect(
     text_threshold=0.4,
     device="cuda",
 ):
-    boxes, logits, phrases = predict(
+    # boxes, logits, phrases = predict(
+    #     model=model,
+    #     image=image,
+    #     caption=text_prompt,
+    #     box_threshold=box_threshold,
+    #     text_threshold=text_threshold,
+    #     device=device,
+    # )
+    boxes, logits, phrases = predict_extended(
         model=model,
         image=image,
-        caption=text_prompt,
+        base_prompt=text_prompt,
         box_threshold=box_threshold,
         text_threshold=text_threshold,
         device=device,
+        prompt_extender = "toy",
     )
     annotated_frame = annotate(
         image_source=image_source, boxes=boxes, logits=logits, phrases=phrases
@@ -257,7 +268,7 @@ if __name__ == "__main__":
     image_files.sort(
         key=lambda x: int(x.split(".")[0])
     )  # sort numerically, 1.jpg, 2.jpg, 3.jpg ...
-    downsampled_image_files = image_files[::10]  # get one image every 10 frames
+    downsampled_image_files = image_files[::cfg.downsample_ratio]  # get one image every 10 frames
     print(f"Number of downsampled_images:{len(downsampled_image_files)}")
     downsampled_images_paths = [
         os.path.join(image_dir, f) for f in downsampled_image_files

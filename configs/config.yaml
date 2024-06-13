@@ -14,7 +14,7 @@ width_2d: 1296
 height_2d: 968
 
 # frames downsample ratio
-downsample_ratio: 10 # pick 1 frame every `downsample_ratio` frames
+downsample_ratio: 20 # pick 1 frame every `downsample_ratio` frames
 
 # grounding dino
 ckpt_repo_id: "ShilongLiu/GroundingDINO"
@@ -42,4 +42,4 @@ similarity_thres: 0.75
 remove_filtered_masks: 0.5 # remove masks containing less than `remove_filtered_masks` percent points after filtering
 remove_small_masks: 100 # 3d masks with less than `remove_small_masks` points will be removed
 # prompt
-base_prompt: "Clothes" #, Pillow, Chair, Sofa, Bed, Desk, Monitor, Television, Book"
+base_prompt: "Jeans" #, Pillow, Chair, Sofa, Bed, Desk, Monitor, Television, Book"
