@@ -1,6 +1,7 @@
 data/**
 pretrained/**
 output/**
+exp_stage_1/**
 
 !README.md
 __pycache__
