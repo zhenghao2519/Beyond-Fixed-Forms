@@ -1,11 +1,15 @@
 # paths
 dataset: "Scannet200"
 scene_id: "scene0435_00"
+
 root_dir: "data/Scannet200/Scannet200_2D_5interval/val"
 # scene_pcd_path: "/home/jie_zhenghao/Open3DIS/data/Scannet200/Scannet200_3D/val/original_ply_files/scene0435_00.ply"
 scene_pcd_path: "data/Scannet200/Scannet200_3D/val/original_npy_files/scene0435_00.npy"
 cam_pose_dir: "data/Scannet200/Scannet200_2D_5interval/val/scene0435_00/pose/"
 depth_im_dir: "data/Scannet200/Scannet200_2D_5interval/val/scene0435_00/depth/"
+
+stage_1_result: "exp_stage_1/Result_OpenVocab_ISBNet-GSAM/final_result_hier_agglo/"
+
 mask_2d_dir: "output/mask_2d"
 mask_3d_dir: "output/mask_3d"
 
