@@ -274,7 +274,10 @@ def predict_extended(
     boxes = prediction_boxes[mask]  # boxes.shape = (n, 4)
 
     tokenizer = model.tokenizer
-    tokenized = tokenizer(base_prompt)
+    tokenized = tokenizer(base_prompt) # Clothes
+    # for predict_classes : check if predicted phrase is with in the classes
+    # Model.predict_with_classes(phrases=phrases, classes=classes)
+    
 
     phrases = [
         get_phrases_from_posmap(logit > text_threshold, tokenized, tokenizer).replace(".", "") for logit in logits
@@ -283,3 +286,14 @@ def predict_extended(
     # class_id = Model.phrases2classes(phrases=phrases, classes=classes)  # for one class this is not needed
 
     return boxes, logits.max(dim=1)[0], phrases
+
+
+@staticmethod
+def phrases2classes(phrases: List[str], classes: List[str]) -> np.ndarray:
+    class_ids = []
+    for phrase in phrases:
+        try:
+            class_ids.append(classes.index(phrase))
+        except ValueError:
+            class_ids.append(None)
+    return np.array(class_ids)

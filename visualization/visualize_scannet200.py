@@ -172,7 +172,7 @@ class VisualizationScannet200:
                 label = dic['final_class']
             pallete =  generate_palette(int(2e3 + 1))
             tt_col = self.color.copy()
-            limit = 20
+            limit = 40
             print("instance shape", instance.shape)
             for i in range(0, instance.shape[0]):
                 # print('DEBUG   '+str(instance.shape) + str(len(pallete)) + str(len(tt_col)))
