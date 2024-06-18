@@ -1,8 +1,15 @@
 ################################################################################################################
 # This file contains the functions that generate descriptors for the prompts.
-
+import openai
+import os
+from dotenv import load_dotenv
 from typing import List
 
+#set OpenAI API key
+load_dotenv()
+openai.api_key = os.getenv('OPENAI_API_KEY')  # stored in .env file on the machine for security
+
+# Utility functions
 def wordify(string: str):
     word = string.replace('_', ' ')
     return word
@@ -21,6 +28,9 @@ def make_descriptor_sentence(descriptor: str):
         return f"which is {descriptor}"
     else:
         return f"which has {descriptor}"
+    
+def string_to_list(description):
+        return [descriptor[2:] for descriptor in description.split('\n') if (descriptor != '') and (descriptor.startswith('- '))]
 
 ### Descriptor Makers.
 def structured_descriptor_builder(descriptor, cls):
@@ -50,8 +60,22 @@ def generate_descriptors_waffle(base_prompt) ->List[str]:
     return descriptors
 
 def generate_descriptors_gpt(base_prompt) ->List[str]:
-    # TBD
-    descriptors = []
+    prompt_template = f"""
+    Q: What are useful visual features for distinguishing a {base_prompt} in a photo?
+    A: There are several useful visual features to tell there is a {base_prompt} in a photo:
+    -
+    """
+    client = openai.OpenAI()
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages = [
+            {"role": "user", "content": prompt_template}
+        ],
+        temperature=0.5, # randomness of the completions
+        max_tokens=100  # maximum number of tokens to generate
+    )
+    
+    descriptors = string_to_list(response.choices[0].text)
     return descriptors
 
 def generate_descriptors_waffle_and_gpt(base_prompt) ->List[str]:
@@ -60,3 +84,12 @@ def generate_descriptors_waffle_and_gpt(base_prompt) ->List[str]:
     return descriptors
 
 # And so on, TODO: fill in the functions
+
+# Main function for testing
+def main():
+    base_prompt = input("Enter the base prompt(categorie name): ")
+    descriptors = generate_descriptors_gpt(base_prompt)
+    print(descriptors)
+
+if __name__ == '__main__':
+    main()
