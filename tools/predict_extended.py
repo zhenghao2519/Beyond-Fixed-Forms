@@ -1,6 +1,7 @@
 import torch
 import copy
 from typing import List, Tuple
+import numpy as np
 
 from torch import nn
 import torch.nn.functional as F
@@ -57,67 +58,6 @@ def predict_extended(
     '''
     # # classes = [base_prompt]
     # transformer = build_transformer(model.args)
-
-    # # load bert
-    # bert = get_tokenlizer.get_pretrained_language_model(text_encoder_type)
-    # bert.pooler.dense.weight.requires_grad_(False)
-    # bert.pooler.dense.bias.requires_grad_(False)
-    # bert = BertModelWarper(bert_model=bert)
-    # tokenizer = BertModel.from_pretrained(text_encoder_type)
-
-    # feat_map = nn.Linear(bert.config.hidden_size, hidden_dim, bias=True)
-    # nn.init.constant_(feat_map.bias.data, 0)
-    # nn.init.xavier_uniform_(feat_map.weight.data)
-
-    # # special tokens
-    # special_tokens = tokenizer.convert_tokens_to_ids(["[CLS]", "[SEP]", ".", "?"])
-
-    #  # prepare input projection layers
-    # if num_feature_levels > 1:
-    #     num_backbone_outs = len(backbone.num_channels)
-    #     input_proj_list = []
-    #     for _ in range(num_backbone_outs):
-    #         in_channels = backbone.num_channels[_]
-    #         input_proj_list.append(
-    #             nn.Sequential(
-    #                 nn.Conv2d(in_channels, hidden_dim, kernel_size=1),
-    #                 nn.GroupNorm(32, hidden_dim),
-    #             )
-    #         )
-    #     for _ in range(num_feature_levels - num_backbone_outs):
-    #         input_proj_list.append(
-    #             nn.Sequential(
-    #                 nn.Conv2d(in_channels, hidden_dim, kernel_size=3, stride=2, padding=1),
-    #                 nn.GroupNorm(32, hidden_dim),
-    #             )
-    #         )
-    #         in_channels = hidden_dim
-    #     input_proj = nn.ModuleList(input_proj_list)
-    # else:
-    #     assert two_stage_type == "no", "two_stage_type should be no if num_feature_levels=1 !!!"
-    #     input_proj = nn.ModuleList(
-    #         [
-    #             nn.Sequential(
-    #                 nn.Conv2d(backbone.num_channels[-1], hidden_dim, kernel_size=1),
-    #                 nn.GroupNorm(32, hidden_dim),
-    #             )
-    #         ]
-    #     )
-    # # prepare class & box embed
-    # _class_embed = ContrastiveEmbed()
-    # _bbox_embed = MLP(hidden_dim, hidden_dim, 4, 3)
-    # nn.init.constant_(_bbox_embed.layers[-1].weight.data, 0)
-    # nn.init.constant_(_bbox_embed.layers[-1].bias.data, 0)
-
-    # if dec_pred_bbox_embed_share:
-    #     box_embed_layerlist = [_bbox_embed for i in range(transformer.num_decoder_layers)]
-    # else:
-    #     box_embed_layerlist = [copy.deepcopy(_bbox_embed) for i in range(transformer.num_decoder_layers)]
-    # class_embed_layerlist = [_class_embed for i in range(transformer.num_decoder_layers)]
-    # bbox_embed = nn.ModuleList(box_embed_layerlist)
-    # class_embed = nn.ModuleList(class_embed_layerlist)
-    # transformer.decoder.bbox_embed = bbox_embed
-    # transformer.decoder.class_embed = class_embed
 
     # Generate extended captions based on different methods
     descriptors = None
