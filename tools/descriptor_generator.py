@@ -2,14 +2,13 @@
 # This file contains the functions that generate descriptors for the prompts.
 import openai
 import os
+import numpy as np
+import string
 from dotenv import load_dotenv
 from typing import List
 
-#set OpenAI API key
-load_dotenv()
-openai.api_key = os.getenv('OPENAI_API_KEY')  # stored in .env file on the machine for security
 
-# Utility functions
+# =========================Utility functions=============================
 def wordify(string: str):
     word = string.replace('_', ' ')
     return word
@@ -32,7 +31,7 @@ def make_descriptor_sentence(descriptor: str):
 def string_to_list(description):
         return [descriptor[2:] for descriptor in description.split('\n') if (descriptor != '') and (descriptor.startswith('- '))]
 
-### Descriptor Makers.
+### =======================Descriptor generators======================================
 def structured_descriptor_builder(descriptor, cls):
     # TODO: move it to config
     pre_descriptor_text = ''
@@ -55,11 +54,40 @@ def toy_descriptors(base_prompt):
     return descriptors_structured
 
 def generate_descriptors_waffle(base_prompt) ->List[str]:
-    # TBD
+    def random_word(length):
+        # Generate a random word of a given length
+        return ''.join(np.random.choice(list(string.ascii_lowercase), length))
+
+    def inject_noise(word):
+        # Inject random ASCII noise into a word
+        noise_chars = list(string.ascii_letters + string.digits + string.punctuation)
+        noisy_word = ''
+        for char in word:
+            if np.random.rand() < 0.3:  # 30% chance to replace character with noise (digits, punctuation, etc.)
+                noisy_word += np.random.choice(noise_chars)
+            else:
+                noisy_word += char
+        return noisy_word
+
+    # Sample the number of descriptors from a Poisson distribution
+    num_descriptors = np.random.poisson(3)
+    num_descriptors = max(3, num_descriptors)  # Ensure at least 3 descriptors
     descriptors = []
-    return descriptors
+    for _ in range(num_descriptors):
+        num_words = np.random.randint(1, 5)
+        word_lengths = np.random.randint(3, 8, num_words)  # Word lengths between 3 and 8 characters
+        words = [inject_noise(random_word(length)) for length in word_lengths]
+        descriptor = ' '.join(words)
+        descriptors.append(descriptor)
+
+    descriptors_structured = [structured_descriptor_builder(descriptor, base_prompt) for descriptor in descriptors]
+    return descriptors_structured
 
 def generate_descriptors_gpt(base_prompt) ->List[str]:
+    #set OpenAI API key
+    load_dotenv()
+    openai.api_key = os.getenv('OPENAI_API_KEY')  # stored in .env file on the machine for security
+
     prompt_template = f"""
     Q: What are useful visual features for distinguishing a {base_prompt} in a photo?
     A: There are several useful visual features to tell there is a {base_prompt} in a photo:
@@ -76,19 +104,24 @@ def generate_descriptors_gpt(base_prompt) ->List[str]:
     )
     
     descriptors = string_to_list(response.choices[0].text)
-    return descriptors
+    descriptors_structured = [structured_descriptor_builder(descriptor, base_prompt) for descriptor in descriptors]
+    return descriptors_structured
 
 def generate_descriptors_waffle_and_gpt(base_prompt) ->List[str]:
-    # TBD
-    descriptors = []
-    return descriptors
+    gpt_descriptor = generate_descriptors_gpt(base_prompt)
+    waffle_descriptor = generate_descriptors_waffle(base_prompt)
+    descriptors = gpt_descriptor + waffle_descriptor
+    descriptors_structured = [structured_descriptor_builder(descriptor, base_prompt) for descriptor in descriptors]
+    return descriptors_structured
 
 # And so on, TODO: fill in the functions
 
 # Main function for testing
 def main():
     base_prompt = input("Enter the base prompt(categorie name): ")
-    descriptors = generate_descriptors_gpt(base_prompt)
+    # descriptors = generate_descriptors_gpt(base_prompt)
+    # descriptors = toy_descriptors(base_prompt)
+    descriptors = generate_descriptors_waffle(base_prompt)
     print(descriptors)
 
 if __name__ == '__main__':
