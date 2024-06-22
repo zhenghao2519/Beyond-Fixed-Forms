@@ -141,7 +141,7 @@ class VisualizationScannet200:
             label = dic['final_class']
         pallete =  generate_palette(int(2e3 + 1))
         tt_col = self.color.copy()
-        limit = 5
+        limit = 300
         for i in range(0, instance.shape[0]):
             # print('DEBUG   '+str(instance.shape) + str(len(pallete)) + str(len(tt_col)))
             tt_col[instance[i] == 1] = pallete[i]
@@ -227,11 +227,11 @@ if __name__ == "__main__":
     ## 4
     check_2dviz = False
     mask2d_path = '../exp/version_sam/hier_agglo/' + scene_id + '.pth'
-    ## 5
-    check_finalviz = False
-    agnostic_path = '../exp/version_check/final_result_hier_agglo/' + scene_id + '.pth'
-    ## 6
-    check_singleviz = True
+    ## 5 Visualize final mask of stage 1
+    check_finalviz = True
+    agnostic_path = os.path.join(cfg.stage_1_result_dir, scene_id + '.pth')
+    ## 6 Visualize final mask of stage 2 in each class
+    check_singleviz = False
     output_dir = os.path.join(cfg.mask_3d_dir, cfg.base_prompt)
     # agnostic_path = './data/Scannet200/Scannet200_3D/val/single_object_test/' + scene_id + '.pth'
 
