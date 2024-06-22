@@ -141,7 +141,7 @@ class VisualizationScannet200:
             label = dic['final_class']
         pallete =  generate_palette(int(2e3 + 1))
         tt_col = self.color.copy()
-        limit = 300
+        limit = 5
         for i in range(0, instance.shape[0]):
             # print('DEBUG   '+str(instance.shape) + str(len(pallete)) + str(len(tt_col)))
             tt_col[instance[i] == 1] = pallete[i]
@@ -160,7 +160,7 @@ class VisualizationScannet200:
 
     def singleviz(self, agnostic_path, specific = False, vocab = False):
             print('...Visualizing single class agnostic mask...')
-            dic = torch.load(agnostic_path)
+            dic = torch.load(agnostic_path, map_location='cpu')
             # print(dic.keys(), dic['conf'], dic['final_class'])
             instance = dic['ins'].cpu()
             print(instance.get_device())
@@ -188,6 +188,37 @@ class VisualizationScannet200:
 
             self.vis.add_points(f'single object mask: ' + str(i), self.point, tt_col, point_size=20, visible=True)
             print('---Done---')  
+            
+    def refinedviz(self, agnostic_path, specific = False, vocab = False):
+        print('...Visualizing refined class agnostic mask...')
+        dic = torch.load(agnostic_path, map_location='cpu')
+        # print(dic.keys(), dic['conf'], dic['final_class'])
+        instance = dic['ins'].cpu()
+        print(instance.get_device())
+        # print("TEST" + str(instance[0]))
+        # instance = torch.stack([torch.tensor(rle_decode(ins)) for ins in instance])
+        conf2d = dic['conf'] # confidence really doesn't affect much (large mask -> small conf)
+
+        if vocab == True:
+            label = dic['final_class']
+        pallete =  generate_palette(int(2e3 + 1))
+        tt_col = self.color.copy()
+        limit = 20
+        print("instance shape", instance.shape)
+        for i in range(0, instance.shape[0]):
+            # print('DEBUG   '+str(instance.shape) + str(len(pallete)) + str(len(tt_col)))
+            tt_col[instance[i] == 1] = pallete[i]
+            if specific and limit > 0: # be more specific but limit 10 masks (avoiding lag)
+                limit -= 1
+                tt_col_specific = self.color.copy()
+                tt_col_specific[instance[i] == 1] = pallete[i]
+                if vocab == True:
+                    self.vis.add_points(f'refined object mask: ' + str(i) + '_' + label[i] + '_' + str(conf2d[i].item())[:5], self.point, tt_col_specific, point_size=20, visible=True)                
+                else:
+                    self.vis.add_points(f'refined object mask: ' + str(i) + '_' + str(conf2d[i].item())[:5], self.point, tt_col_specific, point_size=20, visible=True)
+
+        self.vis.add_points(f'refined object mask: ' + str(i), self.point, tt_col, point_size=20, visible=True)
+        print('---Done---')  
 
 
 def get_parser():
@@ -231,8 +262,11 @@ if __name__ == "__main__":
     check_finalviz = True
     agnostic_path = os.path.join(cfg.stage_1_result_dir, scene_id + '.pth')
     ## 6 Visualize final mask of stage 2 in each class
-    check_singleviz = False
+    check_singleviz = True
     output_dir = os.path.join(cfg.mask_3d_dir, cfg.base_prompt)
+    ## 7 Visualize final refined masks
+    check_refinedviz = True
+    refined_path = os.path.join(cfg.final_output_dir, cfg.base_prompt, scene_id + '.pth')
     # agnostic_path = './data/Scannet200/Scannet200_3D/val/single_object_test/' + scene_id + '.pth'
 
     pyviz3d_dir = '../viz' # visualization directory
@@ -257,4 +291,6 @@ if __name__ == "__main__":
         VIZ.finalviz(agnostic_path, specific = True, vocab = True)
     if check_singleviz:
         VIZ.singleviz(os.path.join(output_dir,scene_id + '.pth'), specific = True, vocab = False)
+    if check_refinedviz:
+        VIZ.refinedviz(refined_path, specific = True, vocab = True)
     VIZ.save(pyviz3d_dir)

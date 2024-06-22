@@ -8,8 +8,6 @@ scene_pcd_path: "data/Scannet200/Scannet200_3D/val/original_npy_files/scene0435_
 cam_pose_dir: "data/Scannet200/Scannet200_2D_5interval/val/scene0435_00/pose/"
 depth_im_dir: "data/Scannet200/Scannet200_2D_5interval/val/scene0435_00/depth/"
 
-stage_1_result_dir: "exp_stage_1/Result_OpenVocab_ISBNet-GSAM/final_result_hier_agglo/"
-
 mask_2d_dir: "output/mask_2d"
 mask_3d_dir: "output/mask_3d"
 
@@ -44,6 +42,15 @@ detected_ratio_threshold: 0.35 # points with detected ratio under lowest `detect
 
 remove_filtered_masks: 0.5 # remove masks containing less than `remove_filtered_masks` percent points after filtering
 remove_small_masks: 100 # 3d masks with less than `remove_small_masks` points will be removed
+
+# Final Refinement of stage 1/2
+stage_1_result_dir: "exp_stage_1/Result_OpenVocab_ISBNet-GSAM/final_result_hier_agglo/"
+
+refinment_sim_thres: 0.75
+refiment_iou_thres: 0.5 
+
+final_output_dir: "output/final_output"
+
 
 # prompt
 base_prompt: "Clothes" #, Pillow, Chair, Sofa, Bed, Desk, Monitor, Television, Book"
