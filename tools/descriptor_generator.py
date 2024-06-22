@@ -6,9 +6,18 @@ import numpy as np
 import string
 from dotenv import load_dotenv
 from typing import List
+import yaml
+from munch import Munch
 
+# List of methods available to use.
+METHODS = [
+    'toy',
+    'gpt',
+    'waffle',
+    'waffle_and_gpt'
+]
 
-# =========================Utility functions=============================
+#%% =========================Utility functions======================================
 def wordify(string: str):
     word = string.replace('_', ' ')
     return word
@@ -31,7 +40,7 @@ def make_descriptor_sentence(descriptor: str):
 def string_to_list(description):
         return [descriptor[2:] for descriptor in description.split('\n') if (descriptor != '') and (descriptor.startswith('- '))]
 
-### =======================Descriptor generators======================================
+#%% =======================Descriptor generators======================================
 def structured_descriptor_builder(descriptor, cls):
     # TODO: move it to config
     pre_descriptor_text = ''
@@ -51,7 +60,8 @@ def toy_descriptors(base_prompt):
     descriptors = ["aks@, pg2f","foot loud", "w6y#, d4e^", "r1q$, m3b@", "r1q$, m3b@", "q4g/, h9m~", "s2t=, i1p-", " g8c, a3v+", " o9n_, f0h?", "k2x%, u5j&", "m3b@, l7z!"]
 
     descriptors_structured = [structured_descriptor_builder(descriptor, base_prompt) for descriptor in descriptors]
-    return descriptors_structured
+    descriptions = {base_prompt: descriptors_structured}
+    return descriptions
 
 def generate_descriptors_waffle(base_prompt) ->List[str]:
     def random_word(length):
@@ -81,7 +91,8 @@ def generate_descriptors_waffle(base_prompt) ->List[str]:
         descriptors.append(descriptor)
 
     descriptors_structured = [structured_descriptor_builder(descriptor, base_prompt) for descriptor in descriptors]
-    return descriptors_structured
+    descriptions = {base_prompt: descriptors_structured}
+    return descriptions
 
 def generate_descriptors_gpt(base_prompt) ->List[str]:
     #set OpenAI API key
@@ -105,23 +116,36 @@ def generate_descriptors_gpt(base_prompt) ->List[str]:
     
     descriptors = string_to_list(response.choices[0].text)
     descriptors_structured = [structured_descriptor_builder(descriptor, base_prompt) for descriptor in descriptors]
-    return descriptors_structured
+    descriptions = {base_prompt: descriptors_structured}
+    return descriptions
 
 def generate_descriptors_waffle_and_gpt(base_prompt) ->List[str]:
     gpt_descriptor = generate_descriptors_gpt(base_prompt)
     waffle_descriptor = generate_descriptors_waffle(base_prompt)
     descriptors = gpt_descriptor + waffle_descriptor
     descriptors_structured = [structured_descriptor_builder(descriptor, base_prompt) for descriptor in descriptors]
-    return descriptors_structured
+    descriptions = {base_prompt: descriptors_structured}
+    return descriptions
 
-# And so on, TODO: fill in the functions
+# TODO: make generators more general, allowing List(str) as input
 
-# Main function for testing
+def descr_generator_selector(base_prompt, method):
+    if method == 'toy':
+        return toy_descriptors(base_prompt)
+    elif method == 'gpt':
+        return generate_descriptors_gpt(base_prompt)
+    elif method == 'waffle':
+        return generate_descriptors_waffle(base_prompt)
+    elif method == 'waffle_and_gpt':
+        return generate_descriptors_waffle_and_gpt(base_prompt)
+    else:
+        raise ValueError("Method not found. Please choose from the following methods: ", METHODS)
+
+#%% ===================Main function for testing======================================
 def main():
-    base_prompt = input("Enter the base prompt(categorie name): ")
-    # descriptors = generate_descriptors_gpt(base_prompt)
-    # descriptors = toy_descriptors(base_prompt)
-    descriptors = generate_descriptors_waffle(base_prompt)
+    cfg = Munch.fromDict(yaml.safe_load(open('/home/jie_zhenghao/Beyond-Fixed-Forms/configs/config.yaml', "r").read()))
+    base_prompt = input("Using generator specified in config.yaml.\nPlease enter the base prompt (categorie name): ")
+    descriptors = descr_generator_selector(base_prompt, cfg.descriptor_generator)
     print(descriptors)
 
 if __name__ == '__main__':

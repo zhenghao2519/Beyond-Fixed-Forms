@@ -14,7 +14,7 @@ width_2d: 1296
 height_2d: 968
 
 # frames downsample ratio
-downsample_ratio: 10 # pick 1 frame every `downsample_ratio` frames
+downsample_ratio: 100 # pick 1 frame every `downsample_ratio` frames
 
 # grounding dino
 ckpt_repo_id: "ShilongLiu/GroundingDINO"
@@ -22,6 +22,12 @@ ckpt_filename: "groundingdino_swinb_cogcoor.pth"
 ckpt_config_filename: "GroundingDINO_SwinB.cfg.py"
 dino_box_threshold: 0.35
 dino_text_threshold: 0.35
+
+# dino bbox filtering using CLIP
+filter_with_CLIP_feature: True
+descriptor_generator: "waffle"
+CLIP_model_size: 'ViT-B/32'   # 'ViT-L/14'
+similarity_threshold: 0.5
 
 # sam
 sam_checkpoint: "pretrained/sam_vit_h_4b8939.pth"
@@ -42,4 +48,4 @@ similarity_thres: 0.75
 remove_filtered_masks: 0.5 # remove masks containing less than `remove_filtered_masks` percent points after filtering
 remove_small_masks: 50 # 3d masks with less than `remove_small_masks` points will be removed
 # prompt
-base_prompt: "Clothes" #"Clothes, which has Buttons and Zippers" #, Pillow, Chair, Sofa, Bed, Desk, Monitor, Television, Book"
+base_prompt: "jeans" #"Clothes, which has Buttons and Zippers" #, Pillow, Chair, Sofa, Bed, Desk, Monitor, Television, Book"
