@@ -26,6 +26,10 @@ python tools/segmentation_2d.py --config configs/config.yaml
 python tools/projection_2d_to_3d.py --config configs/config.yaml
 ```
 
+```
+python tools/refinement.py --config configs/config.yaml
+```
+
 ### Visualize
 ```
 pip install -r requirements.txt
