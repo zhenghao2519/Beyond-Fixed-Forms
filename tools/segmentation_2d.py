@@ -289,6 +289,18 @@ def inference_grounded_sam(
 
 
 #%% FILTER DINO OUTPUTS USING CAPTION FEATURE
+def _convert_image_to_rgb(image):
+    return image.convert("RGB")
+
+def _transform(n_px):
+    return Compose([
+        Resize(n_px, interpolation=BICUBIC),
+        CenterCrop(n_px),
+        _convert_image_to_rgb,
+        ToTensor(),
+        Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711)),
+    ])
+    
 def compute_avg_description_encodings(base_prompt: str, clip_model, mode: str='waffle'):
     '''
     Extend given base_prompt using given extending method,
@@ -321,19 +333,6 @@ def bbox_filter(image, boxes, phrases, capt_feature_ensembled, clip_threshold=0.
     
     if boxes is None or len(boxes) == 0:    # No boxes to filter
         return boxes, [], []
-    
-    def _convert_image_to_rgb(image):
-        return image.convert("RGB")
-
-    def _transform(n_px):
-        return Compose([
-            Resize(n_px, interpolation=BICUBIC),
-            CenterCrop(n_px),
-            _convert_image_to_rgb,
-            ToTensor(),
-            Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711)),
-        ])
-
     preprocess = _transform(224)  # Using 224 as the typical input size for ViT-B/32
     
     # Extract and resize box regions
@@ -346,42 +345,33 @@ def bbox_filter(image, boxes, phrases, capt_feature_ensembled, clip_threshold=0.
         box[1] = max(0, box[1])
         box[2] = min(W, box[2])
         box[3] = min(H, box[3])
-        box_region = image[:, int(box[1]):int(box[3]), int(box[0]):int(box[2])] # shape: (3, H_cropped, W_cropped)
-        # print(f"box_region.dtype: {box_region.dtype}") # torch.float32
-        # print(f"box_region.shape: {box_region.shape}")
-        # box_region = Image.fromarray(box_region.permute(1, 2, 0).cpu().numpy())
-        box_region = Image.fromarray((box_region.permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)) # list
-        os.makedirs(f"/home/jie_zhenghao/Beyond-Fixed-Forms/output/tempt", exist_ok=True)
-        save_path = f"/home/jie_zhenghao/Beyond-Fixed-Forms/output/tempt/box_region{i}.jpg"
-        box_region.save(save_path)
+        box_region = image[:, int(box[1]):int(box[3]), int(box[0]):int(box[2])] # shape: (3, H_cropped, W_cropped) torch.float32
 
-        box_region = preprocess(box_region).unsqueeze(0).to(device) # a list of tensor
-
+        box_region = Image.fromarray((box_region.permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)) #  permute to (H,W,3), * 255 because PIL expects 0-255
+        # For visualization:
+        # os.makedirs(f"/home/jie_zhenghao/Beyond-Fixed-Forms/output/tempt", exist_ok=True)
+        # save_path = f"/home/jie_zhenghao/Beyond-Fixed-Forms/output/tempt/box_region{i}.jpg" 
+        # box_region.save(save_path)
+        box_region = preprocess(box_region).unsqueeze(0).to(device)
+        # For visualization:
+        # save_path = f"/home/jie_zhenghao/Beyond-Fixed-Forms/output/tempt/box_region{i}_preprocessed.jpg"
+        # Image.fromarray((box_region.squeeze(0).permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)).save(save_path)
         box_regions.append(box_region)
-        
-    # if not box_regions:     # No valid regions to process
-    #     return boxes, [], []
     
-    # Compute image embeddings for each box region
+    # Compute image embeddings for each preprocessed box region
     box_embeddings = []
     for region in box_regions:
         # region_tensor = region.unsqueeze(0).to(device)  # shape: (1, 3, H_cropped, W_cropped)
         # print(f"region_tensor.shape: {region_tensor.shape}")
         with torch.no_grad():
-            # region_tensor = F.interpolate(region_tensor, size=(224, 224), mode='bilinear', align_corners=False)
             region_embedding = clip_model.encode_image(region) # shape: (1, 512)
-            # print(f"region_embedding.shape: {region_embedding.shape}")
             box_embeddings.append(F.normalize(region_embedding))
     box_embeddings = torch.cat(box_embeddings, dim=0) # shape: (n_boxes, 512)
     # print(colored(f"box_embeddings.shape: {box_embeddings.shape}", "green", attrs=["bold"]))
 
-    # image_encodings = F.normalize(clip_model.encode_image(image.unsqueeze(0)))
-    # image_encodings = image_encodings.to(device) # shape: (batch_size, 512)
-
     # Compute similarity score
     box_similarities = box_embeddings @ capt_feature_ensembled.T
     print(colored(f"box_similarities: {box_similarities}", "green", attrs=["bold"]))
-    # box_similarities = box_similarities.squeeze(1) #this 
 
     # Filter boxes
     mask = (box_similarities >= clip_threshold).squeeze(1)

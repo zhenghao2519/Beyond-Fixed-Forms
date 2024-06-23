@@ -3,6 +3,9 @@ Query-Time Refinement for Open-Vocabulary 3D Instance Segmentation
 
 ### Installation
 ```
+conda create -n BeyondFF python=3.8
+conda activate BeyondFF
+conda install pytorch==1.12.1 torchvision==0.13.1 cudatoolkit=11.3 -c pytorch
 pip install -r requirements.txt
 ```
 

@@ -1,6 +1,7 @@
 data/**
 pretrained/**
 output/**
+debug.ipynb
 
 !README.md
 __pycache__
