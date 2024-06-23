@@ -15,6 +15,7 @@ def ply2npy(ply_path: str, npy_path: str):
 
     output = np.concatenate([points, colors], axis=1)
     print("output shape", output.shape)
+    os.makedirs(os.path.dirname(npy_path), exist_ok=True)
     np.save(npy_path,output)
 
 

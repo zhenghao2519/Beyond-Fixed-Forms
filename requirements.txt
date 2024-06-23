@@ -6,3 +6,6 @@ huggingface_hub
 
 munch
 configs
+openai
+termcolor
+"git+https://github.com/openai/CLIP.git"

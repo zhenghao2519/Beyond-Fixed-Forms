@@ -15,6 +15,7 @@ from munch import Munch
 
 from tqdm import tqdm
 import sys
+from typing import List, Dict, Tuple 
 
 
 sys.path.append("/medar_smart/temp/Beyond-Fixed-Forms/tools")
@@ -152,7 +153,7 @@ def calculate_iou(ins_masks: torch.Tensor) -> torch.Tensor:
     return iou_matrix
 
 
-def calculate_feature_similarity(labels: list[str]) -> torch.Tensor:
+def calculate_feature_similarity(labels: List[str]) -> torch.Tensor:
     """calculate feature similarity between all masks
 
     args:
@@ -176,9 +177,9 @@ def calculate_feature_similarity(labels: list[str]) -> torch.Tensor:
 def merge_masks(
     ins_masks: torch.Tensor,
     confidences: torch.Tensor,
-    labels: list[str],
+    labels: List[str],
     merge_matrix: torch.Tensor,
-) -> tuple[torch.Tensor, torch.Tensor, list[str], list[list[int]]]:
+) -> Tuple[torch.Tensor, torch.Tensor, List[str], List[List[int]]]:
 
     # find masks to be merged
     merge_matrix = merge_matrix.float()
@@ -215,7 +216,7 @@ def merge_masks(
     )
 
 
-def find_unconnected_subgraphs_tensor(adj_matrix: torch.Tensor) -> list[list[int]]:
+def find_unconnected_subgraphs_tensor(adj_matrix: torch.Tensor) -> List[List[int]]:
     num_nodes = adj_matrix.size(0)
     # Create an identity matrix for comparison
     identity = torch.eye(num_nodes, dtype=torch.float32)

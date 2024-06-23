@@ -25,6 +25,12 @@ ckpt_config_filename: "GroundingDINO_SwinB.cfg.py"
 dino_box_threshold: 0.35
 dino_text_threshold: 0.35
 
+# dino bbox filtering using CLIP
+filter_with_CLIP_feature: True
+descriptor_generator: "waffle"
+CLIP_model_size: 'ViT-B/32'   # 'ViT-L/14'
+similarity_threshold: 0.25
+
 # sam
 sam_checkpoint: "pretrained/sam_vit_h_4b8939.pth"
 sam_url: "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth"
@@ -53,4 +59,4 @@ final_output_dir: "output/final_output"
 
 
 # prompt
-base_prompt: "Clothes" #, Pillow, Chair, Sofa, Bed, Desk, Monitor, Television, Book"
+base_prompt: "clothes" #"Clothes, which has Buttons and Zippers" #, Pillow, Chair, Sofa, Bed, Desk, Monitor, Television, Book"
