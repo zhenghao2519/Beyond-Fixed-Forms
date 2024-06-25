@@ -42,3 +42,4 @@ Manually set pathes in `evaluation/eval/eval_scannet200.py` and run
 ```
 python evaluation/eval/eval_scannet200.py
 ```
+and then check ./results.txt.

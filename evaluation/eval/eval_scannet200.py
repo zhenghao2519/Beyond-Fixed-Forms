@@ -6,7 +6,7 @@ import torch
 import sys
 sys.path.append("./")
 
-from evaluation.dataset.scannet200 import INSTANCE_CAT_SCANNET_200
+from evaluation.dataset.scannet200 import INSTANCE_CAT_SCANNET_200, BENCHMARK_SEMANTIC_IDXS
 from evaluation.eval.scannetv2_inst_eval import ScanNetEval
 from tqdm import tqdm
 
@@ -25,8 +25,8 @@ def rle_decode(rle):
 scan_eval = ScanNetEval(class_labels=INSTANCE_CAT_SCANNET_200)
 # data_path = "../exp/version_qualitative/final_result_hier_agglo_2d"
 # data_path = "./exp_stage_1/Result_OpenVocab_ISBNet-GSAM/final_result_hier_agglo"
-data_path = "/home/zhang/2.sem/Beyond-Fixed-Forms/output/final_output/Clothes"
-pcl_path = "./data/Scannet200/Scannet200_3D/val/groundtruth"
+data_path = "./output/final_output/Clothes"
+pcl_path = "./data/Scannet200/Scannet200_3D/groundtruth"
 
 
 if __name__ == "__main__":
@@ -38,31 +38,38 @@ if __name__ == "__main__":
 
     for scene in tqdm(scenes):
         
-        if scene != "scene0011_00.pth":
-            break
+        if scene != "scene0435_00.pth":
+            continue
         
-        # print("Working on",scene)
+        print("Working on",scene)
         gt_path = os.path.join(pcl_path, scene)
         loader = torch.load(gt_path, map_location="cpu")
 
         sem_gt, inst_gt = loader[2], loader[3]
+        ## !! the sem_gt here has index > 200, need to convert to 0-199
+        ## assign_instances_for_scan will do gt_sem = gt_sem - 2 + 1
+        sem_gt = [BENCHMARK_SEMANTIC_IDXS.index(int(s)) if s!=0 else 0 for s in sem_gt]
+        print("debug idx for gt index (32)", BENCHMARK_SEMANTIC_IDXS.index(32))
+        # print("label index for clothes(25)", BENCHMARK_SEMANTIC_IDXS[25])
+        print("DEBUG GT find number of 25 in gt", np.sum(np.array(sem_gt) == 25))
+        
         gtsem.append(np.array(sem_gt).astype(np.int32))
         gtinst.append(np.array(inst_gt).astype(np.int32))
-        # print("DEBUG GT", sem_gt, inst_gt, len(sem_gt), len(inst_gt))
-        
+        print("DEBUG GT", len(sem_gt), len(inst_gt))
+              
         scene_path = os.path.join(data_path, scene)
         pred_mask = torch.load(scene_path, map_location="cpu")
 
         masks, category, score = pred_mask["ins"], pred_mask["final_class"], pred_mask["conf"]
 
-        # print("DEBUG", masks.shape, category, score)
+        print("DEBUG", masks.shape, category, score)
         # if category is not tensor
         if not torch.is_tensor(category):
             # print("DEBUG This is BeyondFF output, converting to tensor")
             # then it is a list of str class names, convert to tensor
             category = torch.tensor([INSTANCE_CAT_SCANNET_200.index(c.lower()) for c in category])
-            category = torch.tensor(category)
-            # print("DEBUG", category, masks.shape, score.shape)
+            print("DEBUG", category, masks.shape, score.shape)
+            print("DEBUG find number of 25 in pred", np.sum(np.array(masks) == 1))
             
         
         n_mask = category.shape[0]

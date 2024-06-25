@@ -1,56 +1,56 @@
 class,class id,ap,ap50,ap25
-chair,0.0,0.0,0.0
-table,0.0,0.0,0.0
+chair,nan,nan,nan
+table,nan,nan,nan
 door,0.0,0.0,0.0
 couch,nan,nan,nan
 cabinet,0.0,0.0,0.0
 shelf,nan,nan,nan
-desk,nan,nan,nan
-office chair,nan,nan,nan
-bed,nan,nan,nan
-pillow,nan,nan,nan
+desk,0.0,0.0,0.0
+office chair,0.0,0.0,0.0
+bed,0.0,0.0,0.0
+pillow,0.0,0.0,0.0
 sink,0.0,0.0,0.0
-picture,nan,nan,nan
-window,0.0,0.0,0.0
-toilet,nan,nan,nan
+picture,0.0,0.0,0.0
+window,nan,nan,nan
+toilet,0.0,0.0,0.0
 bookshelf,nan,nan,nan
 monitor,nan,nan,nan
-curtain,nan,nan,nan
+curtain,0.0,0.0,0.0
 book,nan,nan,nan
-armchair,0.0,0.0,0.0
+armchair,nan,nan,nan
 coffee table,nan,nan,nan
 box,nan,nan,nan
-refrigerator,0.0,0.0,0.0
-lamp,nan,nan,nan
-kitchen cabinet,0.0,0.0,0.0
-towel,nan,nan,nan
-clothes,nan,nan,nan
+refrigerator,nan,nan,nan
+lamp,0.0,0.0,0.0
+kitchen cabinet,nan,nan,nan
+towel,0.0,0.0,0.0
+clothes,0.06666666666666667,0.6,0.6
 tv,0.0,0.0,0.0
-nightstand,nan,nan,nan
+nightstand,0.0,0.0,0.0
 counter,nan,nan,nan
 dresser,nan,nan,nan
 stool,nan,nan,nan
 cushion,nan,nan,nan
 plant,nan,nan,nan
 ceiling,0.0,0.0,0.0
-bathtub,nan,nan,nan
+bathtub,0.0,0.0,0.0
 end table,nan,nan,nan
 dining table,nan,nan,nan
 keyboard,nan,nan,nan
 bag,nan,nan,nan
-backpack,nan,nan,nan
-toilet paper,nan,nan,nan
+backpack,0.0,0.0,0.0
+toilet paper,0.0,0.0,0.0
 printer,nan,nan,nan
 tv stand,nan,nan,nan
 whiteboard,nan,nan,nan
 blanket,nan,nan,nan
-shower curtain,nan,nan,nan
+shower curtain,0.0,0.0,0.0
 trash can,0.0,0.0,0.0
 closet,nan,nan,nan
 stairs,nan,nan,nan
 microwave,nan,nan,nan
 stove,nan,nan,nan
-shoe,nan,nan,nan
+shoe,0.0,0.0,0.0
 computer tower,nan,nan,nan
 bottle,nan,nan,nan
 bin,nan,nan,nan
@@ -58,10 +58,10 @@ ottoman,nan,nan,nan
 bench,nan,nan,nan
 board,nan,nan,nan
 washing machine,nan,nan,nan
-mirror,nan,nan,nan
+mirror,0.0,0.0,0.0
 copier,nan,nan,nan
 basket,nan,nan,nan
-sofa chair,nan,nan,nan
+sofa chair,0.0,0.0,0.0
 file cabinet,nan,nan,nan
 fan,nan,nan,nan
 laptop,nan,nan,nan
@@ -75,7 +75,7 @@ rack,nan,nan,nan
 plate,nan,nan,nan
 blackboard,nan,nan,nan
 piano,nan,nan,nan
-suitcase,nan,nan,nan
+suitcase,0.0,0.0,0.0
 rail,nan,nan,nan
 radiator,nan,nan,nan
 recycling bin,nan,nan,nan
@@ -98,7 +98,7 @@ column,nan,nan,nan
 bicycle,nan,nan,nan
 ladder,nan,nan,nan
 bathroom stall,nan,nan,nan
-shower wall,nan,nan,nan
+shower wall,0.0,0.0,0.0
 cup,nan,nan,nan
 jacket,nan,nan,nan
 storage bin,nan,nan,nan
@@ -114,10 +114,10 @@ bulletin board,nan,nan,nan
 ironing board,nan,nan,nan
 fireplace,nan,nan,nan
 soap dish,nan,nan,nan
-kitchen counter,0.0,0.0,0.0
+kitchen counter,nan,nan,nan
 doorframe,0.0,0.0,0.0
 toilet paper dispenser,nan,nan,nan
-mini fridge,nan,nan,nan
+mini fridge,0.0,0.0,0.0
 fire extinguisher,nan,nan,nan
 ball,nan,nan,nan
 hat,nan,nan,nan
@@ -170,7 +170,7 @@ divider,nan,nan,nan
 laundry detergent,nan,nan,nan
 bathroom counter,nan,nan,nan
 object,nan,nan,nan
-bathroom vanity,nan,nan,nan
+bathroom vanity,0.0,0.0,0.0
 closet wall,nan,nan,nan
 laundry hamper,nan,nan,nan
 bathroom stall door,nan,nan,nan
