@@ -38,6 +38,7 @@ python visualization/visualize_scannet200.py  --config configs/config.yaml
 ```
 
 ### Evaluation
+Manually set pathes in `evaluation/eval/eval_scannet200.py` and run
 ```
-python -m evaluation.eval.eval_scannet200
+python evaluation/eval/eval_scannet200.py
 ```
