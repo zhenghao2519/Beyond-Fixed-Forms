@@ -36,3 +36,8 @@ pip install -r requirements.txt
 ```
 python visualization/visualize_scannet200.py  --config configs/config.yaml
 ```
+
+### Evaluation
+```
+python -m evaluation.eval.eval_scannet200
+```

@@ -497,6 +497,22 @@ if __name__ == "__main__":
             > cfg.remove_filtered_masks * num_ins_points_before_filtering
         )
     ]
+    # also delete the corresponding confidences and labels
+    backprojected_3d_masks["conf"] = backprojected_3d_masks["conf"][
+        (num_ins_points_after_filtering > cfg.remove_small_masks)
+        & (
+            num_ins_points_after_filtering
+            > cfg.remove_filtered_masks * num_ins_points_before_filtering
+        )
+    ]
+    backprojected_3d_masks["final_class"] = [
+        backprojected_3d_masks["final_class"][i]
+        for i in range(len(backprojected_3d_masks["final_class"]))
+        if num_ins_points_after_filtering[i] > cfg.remove_small_masks
+        and num_ins_points_after_filtering[i]
+        > cfg.remove_filtered_masks * num_ins_points_before_filtering[i]
+    ]
+    
     print("after filtering", backprojected_3d_masks["ins"].shape)
     print("num_ins_points_after_filtering", backprojected_3d_masks["ins"].sum(dim=1))
 

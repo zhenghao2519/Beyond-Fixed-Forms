@@ -1,0 +1,199 @@
+class,class id,ap,ap50,ap25
+chair,0.0,0.0,0.0
+table,0.0,0.0,0.0
+door,0.0,0.0,0.0
+couch,nan,nan,nan
+cabinet,0.0,0.0,0.0
+shelf,nan,nan,nan
+desk,nan,nan,nan
+office chair,nan,nan,nan
+bed,nan,nan,nan
+pillow,nan,nan,nan
+sink,0.0,0.0,0.0
+picture,nan,nan,nan
+window,0.0,0.0,0.0
+toilet,nan,nan,nan
+bookshelf,nan,nan,nan
+monitor,nan,nan,nan
+curtain,nan,nan,nan
+book,nan,nan,nan
+armchair,0.0,0.0,0.0
+coffee table,nan,nan,nan
+box,nan,nan,nan
+refrigerator,0.0,0.0,0.0
+lamp,nan,nan,nan
+kitchen cabinet,0.0,0.0,0.0
+towel,nan,nan,nan
+clothes,nan,nan,nan
+tv,0.0,0.0,0.0
+nightstand,nan,nan,nan
+counter,nan,nan,nan
+dresser,nan,nan,nan
+stool,nan,nan,nan
+cushion,nan,nan,nan
+plant,nan,nan,nan
+ceiling,0.0,0.0,0.0
+bathtub,nan,nan,nan
+end table,nan,nan,nan
+dining table,nan,nan,nan
+keyboard,nan,nan,nan
+bag,nan,nan,nan
+backpack,nan,nan,nan
+toilet paper,nan,nan,nan
+printer,nan,nan,nan
+tv stand,nan,nan,nan
+whiteboard,nan,nan,nan
+blanket,nan,nan,nan
+shower curtain,nan,nan,nan
+trash can,0.0,0.0,0.0
+closet,nan,nan,nan
+stairs,nan,nan,nan
+microwave,nan,nan,nan
+stove,nan,nan,nan
+shoe,nan,nan,nan
+computer tower,nan,nan,nan
+bottle,nan,nan,nan
+bin,nan,nan,nan
+ottoman,nan,nan,nan
+bench,nan,nan,nan
+board,nan,nan,nan
+washing machine,nan,nan,nan
+mirror,nan,nan,nan
+copier,nan,nan,nan
+basket,nan,nan,nan
+sofa chair,nan,nan,nan
+file cabinet,nan,nan,nan
+fan,nan,nan,nan
+laptop,nan,nan,nan
+shower,nan,nan,nan
+paper,nan,nan,nan
+person,nan,nan,nan
+paper towel dispenser,nan,nan,nan
+oven,nan,nan,nan
+blinds,nan,nan,nan
+rack,nan,nan,nan
+plate,nan,nan,nan
+blackboard,nan,nan,nan
+piano,nan,nan,nan
+suitcase,nan,nan,nan
+rail,nan,nan,nan
+radiator,nan,nan,nan
+recycling bin,nan,nan,nan
+container,nan,nan,nan
+wardrobe,nan,nan,nan
+soap dispenser,nan,nan,nan
+telephone,nan,nan,nan
+bucket,nan,nan,nan
+clock,nan,nan,nan
+stand,nan,nan,nan
+light,nan,nan,nan
+laundry basket,nan,nan,nan
+pipe,nan,nan,nan
+clothes dryer,nan,nan,nan
+guitar,nan,nan,nan
+toilet paper holder,nan,nan,nan
+seat,nan,nan,nan
+speaker,nan,nan,nan
+column,nan,nan,nan
+bicycle,nan,nan,nan
+ladder,nan,nan,nan
+bathroom stall,nan,nan,nan
+shower wall,nan,nan,nan
+cup,nan,nan,nan
+jacket,nan,nan,nan
+storage bin,nan,nan,nan
+coffee maker,nan,nan,nan
+dishwasher,nan,nan,nan
+paper towel roll,nan,nan,nan
+machine,nan,nan,nan
+mat,nan,nan,nan
+windowsill,nan,nan,nan
+bar,nan,nan,nan
+toaster,nan,nan,nan
+bulletin board,nan,nan,nan
+ironing board,nan,nan,nan
+fireplace,nan,nan,nan
+soap dish,nan,nan,nan
+kitchen counter,0.0,0.0,0.0
+doorframe,0.0,0.0,0.0
+toilet paper dispenser,nan,nan,nan
+mini fridge,nan,nan,nan
+fire extinguisher,nan,nan,nan
+ball,nan,nan,nan
+hat,nan,nan,nan
+shower curtain rod,nan,nan,nan
+water cooler,nan,nan,nan
+paper cutter,nan,nan,nan
+tray,nan,nan,nan
+shower door,nan,nan,nan
+pillar,nan,nan,nan
+ledge,nan,nan,nan
+toaster oven,nan,nan,nan
+mouse,nan,nan,nan
+toilet seat cover dispenser,nan,nan,nan
+furniture,nan,nan,nan
+cart,nan,nan,nan
+storage container,nan,nan,nan
+scale,nan,nan,nan
+tissue box,nan,nan,nan
+light switch,nan,nan,nan
+crate,nan,nan,nan
+power outlet,nan,nan,nan
+decoration,nan,nan,nan
+sign,nan,nan,nan
+projector,nan,nan,nan
+closet door,nan,nan,nan
+vacuum cleaner,nan,nan,nan
+candle,nan,nan,nan
+plunger,nan,nan,nan
+stuffed animal,nan,nan,nan
+headphones,nan,nan,nan
+dish rack,nan,nan,nan
+broom,nan,nan,nan
+guitar case,nan,nan,nan
+range hood,nan,nan,nan
+dustpan,nan,nan,nan
+hair dryer,nan,nan,nan
+water bottle,nan,nan,nan
+handicap bar,nan,nan,nan
+purse,nan,nan,nan
+vent,nan,nan,nan
+shower floor,nan,nan,nan
+water pitcher,nan,nan,nan
+mailbox,nan,nan,nan
+bowl,nan,nan,nan
+paper bag,nan,nan,nan
+alarm clock,nan,nan,nan
+music stand,nan,nan,nan
+projector screen,nan,nan,nan
+divider,nan,nan,nan
+laundry detergent,nan,nan,nan
+bathroom counter,nan,nan,nan
+object,nan,nan,nan
+bathroom vanity,nan,nan,nan
+closet wall,nan,nan,nan
+laundry hamper,nan,nan,nan
+bathroom stall door,nan,nan,nan
+ceiling light,nan,nan,nan
+trash bin,nan,nan,nan
+dumbbell,nan,nan,nan
+stair rail,nan,nan,nan
+tube,nan,nan,nan
+bathroom cabinet,nan,nan,nan
+cd case,nan,nan,nan
+closet rod,nan,nan,nan
+coffee kettle,nan,nan,nan
+structure,nan,nan,nan
+shower head,nan,nan,nan
+keyboard piano,nan,nan,nan
+case of water bottles,nan,nan,nan
+coat rack,nan,nan,nan
+storage organizer,nan,nan,nan
+folded chair,nan,nan,nan
+fire alarm,nan,nan,nan
+power strip,nan,nan,nan
+calendar,nan,nan,nan
+poster,nan,nan,nan
+potted plant,nan,nan,nan
+luggage,nan,nan,nan
+mattress,nan,nan,nan
