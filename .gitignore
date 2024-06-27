@@ -2,7 +2,9 @@ data/**
 pretrained/**
 output/**
 exp_stage_1/**
+tmp
 debug.ipynb
+
 
 !README.md
 __pycache__
