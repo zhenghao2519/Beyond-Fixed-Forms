@@ -109,7 +109,7 @@ Others
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(description="Configuration Open3DIS")
+    parser = argparse.ArgumentParser(description="Configuration Beyond Fixed Forms")
     parser.add_argument("--config", type=str, required=True, help="Config")
     return parser
 
@@ -119,91 +119,116 @@ if __name__ == "__main__":
     args = get_parser().parse_args()
     cfg = Munch.fromDict(yaml.safe_load(open(args.config, "r").read()))
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
+    clip_model, _ = clip.load("ViT-B/32", device=device)
 
     stage1_dir = cfg.stage_1_result_dir
-    stage1_path = os.path.join(stage1_dir, f"{cfg.scene_id}.pth")
-
-    scene_id = cfg.scene_id
     mask_3d_dir = cfg.mask_3d_dir
-    stage2_path = os.path.join(mask_3d_dir, cfg.base_prompt, f"{scene_id}.pth")
+    
+    stage2_output_dir = os.path.join(mask_3d_dir, cfg.base_prompt)
+    
+    stage2_outputs = sorted([s for s in os.listdir(stage2_output_dir) if s.endswith("_00.pth")])
+    # stage2_outputs = ["scene0435_00.pth"]
+    for stage2_output in tqdm(stage2_outputs):
+        scene_id = stage2_output.replace(".pth", "")
+        print("Working on", scene_id)
+        
+        stage1_path = os.path.join(stage1_dir, f"{scene_id}.pth")
+        stage2_path = os.path.join(mask_3d_dir, cfg.base_prompt, f"{scene_id}.pth")
 
-    print(stage1_path, stage2_path)
-
-    stage1_output = torch.load(stage1_path, map_location=device)
-    stage2_output = torch.load(stage2_path, map_location=device)
-
-    # Process stage 1 masks
-    instance = stage1_output["ins"]
-    stage1_output["ins"] = torch.stack(
-        [torch.tensor(rle_decode(ins)) for ins in instance]
-    )
-
-    # Process stage 1 labels
-    class_indices = stage1_output["final_class"]
-    stage1_output["final_class"] = [idx_to_label(idx) for idx in class_indices]
-
-    # compute iou between stage1 and stage2 masks
-    iou_matrix = calculate_iou_between_stages(
-        stage1_output["ins"], stage2_output["ins"]
-    )
-    max_match = torch.argmax(
-        iou_matrix, dim=1
-    )  # for each stage2 mask, find the best matched stage1 mask
-
-    # compute similarity between stage1 and stage2 labels
-    matched_labels = [stage1_output["final_class"][idx] for idx in max_match]
-    clip_model, _ = clip.load("ViT-B/32", device=device)
-    text2 = cfg.base_prompt
-    clip_similarities = [
-        float(compute_clip_similarity(clip_model, text2, text1))
-        for text1 in matched_labels
-    ]
-
-    # use stage2 masks to refine stage1 masks
-    final_output = {
-        "ins": [],  # (Ins, N) torch.Tensor
-        "conf": [],  # (Ins, ) torch.Tensor
-        "final_class": [],  # (Ins,) List[str]
-    }
-    sim_thres = cfg.refinment_sim_thres
-    iou_thres = cfg.refiment_iou_thres
-
-    for i, idx in enumerate(max_match):  # i in stage2, idx in stage1
-        if clip_similarities[i] < sim_thres:
-            continue
-
-        if iou_matrix[i, idx] > iou_thres:
-            # use stage1 mask
-            final_output["ins"].append(stage1_output["ins"][idx])
-            final_output["conf"].append(stage1_output["conf"][idx])
-            # use corresponding stage2 label
-            final_output["final_class"].append(stage2_output["final_class"][i])
+        if os.path.exists(stage1_path) and os.path.exists(stage2_path):
+            pass
         else:
-            # use intersection of stage1 and stage2 mask
-            final_output["ins"].append(
-                stage1_output["ins"][idx] * stage2_output["ins"][i]
-            )
-            # average confidence
-            final_output["conf"].append(
-                (stage1_output["conf"][idx] + stage2_output["conf"][i]) / 2
-            )
-            # use corresponding stage2 label
-            final_output["final_class"].append(stage2_output["final_class"][i])
+            continue
+        
+        print(stage1_path, stage2_path)
 
-    # transform to torch.Tensor
-    final_output["ins"] = torch.stack(final_output["ins"]).to(bool)
-    final_output["conf"] = torch.stack(final_output["conf"])
-    print(
-        "Refined output shape:",
-        final_output["ins"].shape,
-        final_output["conf"].shape,
-        len(final_output["final_class"]),
-    )
-    print("Refined output classes:", final_output["final_class"])
+        stage1_output = torch.load(stage1_path, map_location="cpu")
+        stage2_output = torch.load(stage2_path, map_location="cpu")	
 
-    # save the refined masks
-    os.makedirs(os.path.join(cfg.final_output_dir, cfg.base_prompt), exist_ok=True)
-    torch.save(
-        final_output,
-        os.path.join(cfg.final_output_dir, cfg.base_prompt, f"{scene_id}.pth"),
-    )
+        # Process stage 1 masks
+        instance = stage1_output["ins"]
+        stage1_output["ins"] = torch.stack(
+            [torch.tensor(rle_decode(ins)) for ins in instance]
+        )
+
+        # Process stage 1 labels
+        class_indices = stage1_output["final_class"]
+        stage1_output["final_class"] = [idx_to_label(idx) for idx in class_indices]
+
+        # compute iou between stage1 and stage2 masks
+        iou_matrix = calculate_iou_between_stages(
+            stage1_output["ins"], stage2_output["ins"]
+        )
+        max_match = torch.argmax(
+            iou_matrix, dim=1
+        )  # for each stage2 mask, find the best matched stage1 mask
+
+        # compute similarity between stage1 and stage2 labels
+        matched_labels = [stage1_output["final_class"][idx] for idx in max_match]
+        text2 = cfg.base_prompt
+        clip_similarities = [
+            float(compute_clip_similarity(clip_model, text2, text1))
+            for text1 in matched_labels
+        ]
+        
+        print("Matched labels:", matched_labels)
+        print("Clip similarities:", clip_similarities)
+
+        # use stage2 masks to refine stage1 masks
+        final_output = {
+            "ins": [],  # (Ins, N) torch.Tensor
+            "conf": [],  # (Ins, ) torch.Tensor
+            "final_class": [],  # (Ins,) List[str]
+        }
+        sim_thres = cfg.refinment_sim_thres
+        iou_thres = cfg.refiment_iou_thres
+
+        for i, idx in enumerate(max_match):  # i in stage2, idx in stage1
+            if clip_similarities[i] < sim_thres:
+                continue
+
+            if iou_matrix[i, idx] > iou_thres:
+                # use stage1 mask
+                final_output["ins"].append(stage1_output["ins"][idx])
+                final_output["conf"].append(stage1_output["conf"][idx])
+                # use corresponding stage2 label
+                final_output["final_class"].append(stage2_output["final_class"][i])
+            else:
+                # use intersection of stage1 and stage2 mask
+                final_output["ins"].append(
+                    stage1_output["ins"][idx] * stage2_output["ins"][i]
+                )
+                # average confidence
+                final_output["conf"].append(
+                    (stage1_output["conf"][idx] + stage2_output["conf"][i]) / 2
+                )
+                # use corresponding stage2 label
+                final_output["final_class"].append(stage2_output["final_class"][i])
+
+        # transform to torch.Tensor
+        
+        if len(final_output["ins"]) == 0:
+            print("No mask found")
+            torch.save(
+                final_output,
+                os.path.join(cfg.final_output_dir, cfg.base_prompt, f"{scene_id}.pth"),
+            )
+            continue
+            
+        final_output["ins"] = torch.stack(final_output["ins"]).to(bool)
+        final_output["conf"] = torch.stack(final_output["conf"])
+        print(
+            "Refined output shape:",
+            final_output["ins"].shape,
+            final_output["conf"].shape,
+            len(final_output["final_class"]),
+        )
+        print("Refined output classes:", final_output["final_class"])
+
+        # save the refined masks
+        os.makedirs(os.path.join(cfg.final_output_dir, cfg.base_prompt), exist_ok=True)
+        torch.save(
+            final_output,
+            os.path.join(cfg.final_output_dir, cfg.base_prompt, f"{scene_id}.pth"),
+        )

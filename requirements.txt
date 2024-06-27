@@ -9,3 +9,7 @@ configs
 openai
 termcolor
 "git+https://github.com/openai/CLIP.git"
+
+# Evaluation
+plyfile
+open3d
