@@ -25,7 +25,7 @@ def rle_decode(rle):
 scan_eval = ScanNetEval(class_labels=INSTANCE_CAT_SCANNET_200)
 # data_path = "../exp/version_qualitative/final_result_hier_agglo_2d"
 # data_path = "./exp_stage_1/Result_OpenVocab_ISBNet-GSAM/final_result_hier_agglo"
-data_path = "./output/final_output/Clothes"
+data_path = "./output/final_output/clothes"
 pcl_path = "./data/Scannet200/Scannet200_3D/groundtruth"
 
 
@@ -36,11 +36,7 @@ if __name__ == "__main__":
     gtinst = []
     res = []
 
-    for scene in tqdm(scenes):
-        
-        if scene != "scene0435_00.pth":
-            continue
-        
+    for scene in tqdm(scenes):        
         print("Working on",scene)
         gt_path = os.path.join(pcl_path, scene)
         loader = torch.load(gt_path, map_location="cpu")
@@ -48,10 +44,11 @@ if __name__ == "__main__":
         sem_gt, inst_gt = loader[2], loader[3]
         ## !! the sem_gt here has index > 200, need to convert to 0-199
         ## assign_instances_for_scan will do gt_sem = gt_sem - 2 + 1
-        sem_gt = [BENCHMARK_SEMANTIC_IDXS.index(int(s)) if s!=0 else 0 for s in sem_gt]
-        print("debug idx for gt index (32)", BENCHMARK_SEMANTIC_IDXS.index(32))
+        print("DEBUG all unique semantic labels and their occurance in scene",scene, np.unique(sem_gt.astype(np.int32), return_counts=True))
+        sem_gt = [BENCHMARK_SEMANTIC_IDXS.index(int(s)) if s!=0 and int(s) in BENCHMARK_SEMANTIC_IDXS else -1 for s in sem_gt]
+        # print("debug idx for gt index (32)", BENCHMARK_SEMANTIC_IDXS.index(32))
         # print("label index for clothes(25)", BENCHMARK_SEMANTIC_IDXS[25])
-        print("DEBUG GT find number of 25 in gt", np.sum(np.array(sem_gt) == 25))
+        # print("DEBUG GT find number of 25 in gt", np.sum(np.array(sem_gt) == 25))
         
         gtsem.append(np.array(sem_gt).astype(np.int32))
         gtinst.append(np.array(inst_gt).astype(np.int32))
@@ -62,6 +59,8 @@ if __name__ == "__main__":
 
         masks, category, score = pred_mask["ins"], pred_mask["final_class"], pred_mask["conf"]
 
+        masks = torch.tensor(masks)
+        score = torch.tensor(score)
         print("DEBUG", masks.shape, category, score)
         # if category is not tensor
         if not torch.is_tensor(category):

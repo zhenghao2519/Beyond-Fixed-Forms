@@ -141,7 +141,7 @@ class VisualizationScannet200:
             label = dic['final_class']
         pallete =  generate_palette(int(2e3 + 1))
         tt_col = self.color.copy()
-        limit = 5
+        limit = 50
         for i in range(0, instance.shape[0]):
             # print('DEBUG   '+str(instance.shape) + str(len(pallete)) + str(len(tt_col)))
             tt_col[instance[i] == 1] = pallete[i]
@@ -243,7 +243,7 @@ if __name__ == "__main__":
     cfg = Munch.fromDict(yaml.safe_load(open(args.config, "r").read()))
     
     # Scene ID to visualize
-    scene_id = cfg.scene_id #'scene0435_00'
+    scene_id = 'scene0435_00'
 
     ##### The format follows the dataset tree
     ## 1
@@ -259,7 +259,7 @@ if __name__ == "__main__":
     check_2dviz = False
     mask2d_path = '../exp/version_sam/hier_agglo/' + scene_id + '.pth'
     ## 5 Visualize final mask of stage 1
-    check_finalviz = True
+    check_finalviz = False
     agnostic_path = os.path.join(cfg.stage_1_result_dir, scene_id + '.pth')
     ## 6 Visualize final mask of stage 2 in each class
     check_singleviz = True
@@ -272,7 +272,7 @@ if __name__ == "__main__":
     pyviz3d_dir = '../viz' # visualization directory
 
     # Visualize Point Cloud 
-    ply_file = './data/Scannet200/Scannet200_3D/val/original_ply_files'
+    ply_file = './data/Scannet200/Scannet200_3D/original_ply_files'
     point, color = read_pointcloud(os.path.join(ply_file,scene_id + '.ply'))
     color = color * 127.5
     print(len(color))
