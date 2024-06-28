@@ -13,7 +13,7 @@ from segment_anything import build_sam, SamPredictor
 
 # tools
 import descriptor_generator
-from predict_extended import predict_extended
+# from predict_extended import predict_extended
 
 # other imports
 from torch.nn import functional as F
@@ -97,7 +97,7 @@ def load_grounded_sam():
     print(colored("GroundingDINO & SAM loaded", "yellow", attrs=["bold"]))
     return groundingdino_model, sam_predictor
 
-def load_clip_model(model_size='ViT-B/32'):
+def load_clip_model(model_size='ViT-L/14'):
     model, _ = clip.load(model_size, device=device, jit=False)
     model.eval()
     model.requires_grad_(False)
@@ -108,6 +108,7 @@ def load_clip_model(model_size='ViT-B/32'):
 def detect(
     image_source,
     image,
+    capt_feature_ensembled,
     text_prompt,
     model,
     clip_model,
@@ -126,16 +127,17 @@ def detect(
         text_threshold=text_threshold,
         device=device,
     )
-    # 
-    # boxes, logits, phrases = predict_extended(
-    #     model=model,
-    #     image=image,
-    #     base_prompt=text_prompt,
-    #     box_threshold=box_threshold,
-    #     text_threshold=text_threshold,
-    #     device=device,
-    #     prompt_extender = "toy",
-    # )
+    # remove boxes with labels different from the base prompt
+    if len(phrases) != 0:
+        # print(colored(f"Detected phrases: {phrases}", "green", attrs=["bold"]))
+        # print(text_prompt)
+        indices = [i for i, phrase in enumerate(phrases) if text_prompt in phrase]
+        # print("box_indices", indices)
+        boxes = boxes[indices]
+        logits = logits[indices]
+        phrases = [phrases[i] for i in indices]
+        # print("after filtering", phrases)
+        
 
     if filter_with_clip_feature:
         if clip_size is None:
@@ -147,7 +149,6 @@ def detect(
         else:
             
             # print(colored(f"Modle {clip_size} loaded", "yellow", attrs=["bold"]))
-            capt_feature_ensembled = compute_avg_description_encodings(text_prompt, clip_model, mode='waffle')
             # print(colored(f"Caption feature ensembled, shape: {capt_feature_ensembled.shape}", "green", attrs=["bold"]))
             boxes, logits, phrases = bbox_filter(image, boxes, phrases, capt_feature_ensembled, clip_threshold=similarity_threshold, clip_model=clip_model)
     
@@ -233,6 +234,10 @@ def inference_grounded_sam(
 
     results = []
     num_img_with_boxes = 0
+    
+    if filter_with_clip_feature:
+        capt_feature_ensembled = compute_avg_description_encodings(text_prompt, clip_model, mode='waffle')
+                    
     for i, image_path in enumerate(
         tqdm(image_paths, desc="Processing images", leave=False)
     ):
@@ -244,6 +249,7 @@ def inference_grounded_sam(
         annotated_frame, detected_boxes, confidences, labels = detect(
             image_source,
             image,
+            capt_feature_ensembled,
             text_prompt=base_prompt,
             model=groundingdino_model.to(device),
             box_threshold=dino_box_threshold,
@@ -450,7 +456,7 @@ if __name__ == "__main__":
                 filter_with_clip_feature=filter_with_clip_feature,
                 clip_size=clip_size,
                 similarity_threshold=similarity_threshold,
-                draw=False,
+                draw=True,
             )
             os.makedirs(os.path.join(mask_2d_dir, text_prompt), exist_ok=True)
             mask_2d_path = os.path.join(mask_2d_dir, text_prompt, f"{scene_id}.pth")

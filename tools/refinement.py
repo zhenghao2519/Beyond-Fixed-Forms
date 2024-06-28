@@ -120,7 +120,7 @@ if __name__ == "__main__":
     cfg = Munch.fromDict(yaml.safe_load(open(args.config, "r").read()))
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    clip_model, _ = clip.load("ViT-B/32", device=device)
+    clip_model, _ = clip.load("ViT-L/14", device=device)
 
     stage1_dir = cfg.stage_1_result_dir
     mask_3d_dir = cfg.mask_3d_dir
