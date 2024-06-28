@@ -127,16 +127,17 @@ def detect(
         text_threshold=text_threshold,
         device=device,
     )
-    # 
-    # boxes, logits, phrases = predict_extended(
-    #     model=model,
-    #     image=image,
-    #     base_prompt=text_prompt,
-    #     box_threshold=box_threshold,
-    #     text_threshold=text_threshold,
-    #     device=device,
-    #     prompt_extender = "toy",
-    # )
+    # remove boxes with labels different from the base prompt
+    if len(phrases) != 0:
+        # print(colored(f"Detected phrases: {phrases}", "green", attrs=["bold"]))
+        # print(text_prompt)
+        indices = [i for i, phrase in enumerate(phrases) if text_prompt in phrase]
+        # print("box_indices", indices)
+        boxes = boxes[indices]
+        logits = logits[indices]
+        phrases = [phrases[i] for i in indices]
+        # print("after filtering", phrases)
+        
 
     if filter_with_clip_feature:
         if clip_size is None:
