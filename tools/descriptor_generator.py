@@ -63,32 +63,42 @@ def toy_descriptors(base_prompt):
     descriptions = {base_prompt: descriptors_structured}
     return descriptions
 
-def generate_descriptors_waffle(base_prompt) ->List[str]:
-    def random_word(length):
-        # Generate a random word of a given length
-        return ''.join(np.random.choice(list(string.ascii_lowercase), length))
+def generate_descriptors_waffle(base_prompt) -> str:
+    def random_char(num_word, word_length):
+        # Generate a random char seq of a given length
+        res = []
+        for _ in range(num_word):
+            res.append(''.join(np.random.choice(list(string.ascii_letters + string.digits + string.punctuation), word_length)))
+        res_str = ' '.join(res)
+        return res_str
+        # return ''.join(np.random.choice(list(string.digits + string.ascii_letters + string.punctuation), length))
 
-    def inject_noise(word):
-        # Inject random ASCII noise into a word
-        noise_chars = list(string.ascii_letters + string.digits + string.punctuation)
-        noisy_word = ''
-        for char in word:
-            if np.random.rand() < 0.3:  # 30% chance to replace character with noise (digits, punctuation, etc.)
-                noisy_word += np.random.choice(noise_chars)
-            else:
-                noisy_word += char
-        return noisy_word
+    def random_word(num_word, word_list):
+        
+        
+        res = []
+        for _ in range(num_word):
+            res.append(''.join(np.random.choice(word_list,1)))
+        res_str = ' '.join(res)
+        return res_str
 
     # Sample the number of descriptors from a Poisson distribution
-    num_descriptors = np.random.poisson(3)
-    num_descriptors = max(3, num_descriptors)  # Ensure at least 3 descriptors
+    num_descriptors_pairs = 15
+    num_words = 2
+    word_length = 5
+      
     descriptors = []
-    for _ in range(num_descriptors):
-        num_words = np.random.randint(1, 5)
-        word_lengths = np.random.randint(3, 8, num_words)  # Word lengths between 3 and 8 characters
-        words = [inject_noise(random_word(length)) for length in word_lengths]
-        descriptor = ' '.join(words)
-        descriptors.append(descriptor)
+    
+    # Load the word list
+    import pickle as pkl
+    print("current working directory: ", os.getcwd())
+    word_list = pkl.load(open('tools/waffle_word_list.pkl', 'rb'))
+    # print(word_list)
+    word_list = [x[:word_length] for x in word_list]
+    
+    for _ in range(num_descriptors_pairs):
+        descriptors.append(random_word(num_words, word_list))
+        descriptors.append(random_char(num_words, word_length))
 
     descriptors_structured = [structured_descriptor_builder(descriptor, base_prompt) for descriptor in descriptors]
     descriptions = {base_prompt: descriptors_structured}
