@@ -127,8 +127,8 @@ if __name__ == "__main__":
     
     stage2_output_dir = os.path.join(mask_3d_dir, cfg.base_prompt)
     
-    stage2_outputs = sorted([s for s in os.listdir(stage2_output_dir) if s.endswith("_00.pth")])
-    # stage2_outputs = ["scene0435_00.pth"]
+    # stage2_outputs = sorted([s for s in os.listdir(stage2_output_dir) if s.endswith("_00.pth")])
+    stage2_outputs = ["scene0435_00.pth"]
     for stage2_output in tqdm(stage2_outputs):
         scene_id = stage2_output.replace(".pth", "")
         print("Working on", scene_id)

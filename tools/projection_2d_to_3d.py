@@ -19,7 +19,7 @@ from typing import List, Dict, Tuple
 
 
 sys.path.append("/medar_smart/temp/Beyond-Fixed-Forms/tools")
-from segmentation_2d import inference_grounded_sam
+# from segmentation_2d import inference_grounded_sam
 
 device = torch.device(
     "cuda"
@@ -310,8 +310,8 @@ if __name__ == "__main__":
     
     seg_output_dir = os.path.join(mask_2d_dir, cfg.base_prompt)
     
-    seg_outputs = sorted([s for s in os.listdir(seg_output_dir) if s.endswith("_00.pth")])
-    # seg_outputs = ["scene0435_00.pth"]
+    # seg_outputs = sorted([s for s in os.listdir(seg_output_dir) if s.endswith("_00.pth")])
+    seg_outputs = ["scene0435_00.pth"]
     for seg_output in tqdm(seg_outputs):
         scene_id = seg_output[:-4]
         print("Working on", scene_id)
@@ -511,6 +511,7 @@ if __name__ == "__main__":
                 > cfg.remove_filtered_masks * num_ins_points_before_filtering
             )
         ]
+        backprojected_3d_masks["conf"] = backprojected_3d_masks["conf"].to(device=device)
         # also delete the corresponding confidences and labels
         backprojected_3d_masks["conf"] = backprojected_3d_masks["conf"][
             (num_ins_points_after_filtering > cfg.remove_small_masks)
