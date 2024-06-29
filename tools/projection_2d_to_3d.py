@@ -184,7 +184,12 @@ def merge_masks(
     # find masks to be merged
     merge_matrix = merge_matrix.float()
     mask_indeces_to_be_merged = find_unconnected_subgraphs_tensor(merge_matrix)
+    
+    # filter mask aggregated from less than 3 masks
+    # mask_indeces_to_be_merged = [ mask_indeces for mask_indeces in mask_indeces_to_be_merged if len(mask_indeces) >= cfg.min_aggragated_masks]
+    
     print("masks_to_be_merged", mask_indeces_to_be_merged)
+    
 
     # merge masks
     aggregated_masks = []
@@ -310,8 +315,8 @@ if __name__ == "__main__":
     
     seg_output_dir = os.path.join(mask_2d_dir, cfg.base_prompt)
     
-    # seg_outputs = sorted([s for s in os.listdir(seg_output_dir) if s.endswith("_00.pth")])
-    seg_outputs = ["scene0435_00.pth"]
+    seg_outputs = sorted([s for s in os.listdir(seg_output_dir) if s.endswith("_00.pth")])
+    # seg_outputs = ["scene0435_00.pth"]
     for seg_output in tqdm(seg_outputs):
         scene_id = seg_output[:-4]
         print("Working on", scene_id)
@@ -405,6 +410,22 @@ if __name__ == "__main__":
                 # print("single_mask shape", mask.shape, "all mask shape", masked_counts.shape)
                 masked_counts[mask] += 1
 
+        """if no mask is detected"""
+        if len(backprojected_3d_masks["ins"]) == 0:
+            print("No 3d masks detected")
+            # convert to tensor
+            backprojected_3d_masks["ins"] = torch.tensor([]).to(device=device)  # (Ins, N)
+            backprojected_3d_masks["conf"] = torch.tensor([]).to(device=device)  # (Ins, )
+            backprojected_3d_masks["final_class"] = []  # (Ins,)
+            
+            # save the backprojected_3d_masks
+            os.makedirs(os.path.join(cfg.mask_3d_dir, cfg.base_prompt), exist_ok=True)
+            torch.save(
+                backprojected_3d_masks,
+                os.path.join(cfg.mask_3d_dir, cfg.base_prompt, f"{scene_id}.pth"),
+            )
+            continue
+        
         # convert each value in backprojected_3d_masks to tensor
         backprojected_3d_masks["ins"] = torch.stack(
             backprojected_3d_masks["ins"], dim=0
@@ -440,7 +461,7 @@ if __name__ == "__main__":
             image_files.sort(
                 key=lambda x: int(x.split(".")[0])
             )  # sort numerically, 1.jpg, 2.jpg, 3.jpg ...
-            downsampled_image_files = image_files[::10]  # get one image every 10 frames
+            downsampled_image_files = image_files[::cfg.downsample_ratio]  # get one image every 10 frames
             downsampled_images_paths = [
                 os.path.join(image_dir, f) for f in downsampled_image_files
             ]

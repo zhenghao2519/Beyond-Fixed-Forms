@@ -127,8 +127,8 @@ if __name__ == "__main__":
     
     stage2_output_dir = os.path.join(mask_3d_dir, cfg.base_prompt)
     
-    # stage2_outputs = sorted([s for s in os.listdir(stage2_output_dir) if s.endswith("_00.pth")])
-    stage2_outputs = ["scene0435_00.pth"]
+    stage2_outputs = sorted([s for s in os.listdir(stage2_output_dir) if s.endswith("_00.pth")])
+    # stage2_outputs = ["scene0435_00.pth"]
     for stage2_output in tqdm(stage2_outputs):
         scene_id = stage2_output.replace(".pth", "")
         print("Working on", scene_id)
@@ -145,6 +145,15 @@ if __name__ == "__main__":
 
         stage1_output = torch.load(stage1_path, map_location="cpu")
         stage2_output = torch.load(stage2_path, map_location="cpu")	
+        
+        """If stage 2 is empty, save empty output and continue"""
+        if len(stage2_output["ins"]) == 0:
+            print("Empty stage 2 mask")
+            torch.save(
+                stage2_output,
+                os.path.join(cfg.final_output_dir, cfg.base_prompt, f"{scene_id}.pth"),
+            )
+            continue
 
         # Process stage 1 masks
         instance = stage1_output["ins"]
