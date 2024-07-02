@@ -3,17 +3,17 @@ dataset: "Scannet200"
 scene_id: "scene0435_00"
 
 # root_dir: "data/Scannet200/Scannet200_2D_5interval/val"
-root_dir: "data/Scannet200/"
+root_dir: "./data/Scannet200/"
 # scene_pcd_path: "/home/jie_zhenghao/Open3DIS/data/Scannet200/Scannet200_3D/val/original_ply_files/scene0435_00.ply"
 # scene_pcd_path: "data/Scannet200/Scannet200_3D/val/original_npy_files/scene0435_00.npy"
-scene_npy_dir: "data/Scannet200/Scannet200_3D/original_npy_files"
+scene_npy_dir: "./data/Scannet200/Scannet200_3D/original_npy_files"
 
 # cam_pose_dir: "data/Scannet200/Scannet200_2D_5interval/val/scene0435_00/pose/"
 # depth_im_dir: "data/Scannet200/Scannet200_2D_5interval/val/scene0435_00/depth/"
-scene_2d_dir: "data/Scannet200/Scannet200_2D"
+scene_2d_dir: "./data/Scannet200/Scannet200_2D"
 
-mask_2d_dir: "output/mask_2d"
-mask_3d_dir: "output/mask_3d"
+mask_2d_dir: "./output/mask_2d"
+mask_3d_dir: "./output/mask_3d"
 
 # rgb photo resolution
 width_2d: 1296
@@ -32,11 +32,13 @@ dino_text_threshold: 0.35
 # dino bbox filtering using CLIP
 filter_with_CLIP_feature: True
 descriptor_generator: "waffle"
+waffle_word_list_path: "./tools/waffle_word_list.pkl"
 CLIP_model_size: 'ViT-L/14'   # 'ViT-L/14'
-similarity_threshold: 0.2
+similarity_threshold: 0.25
 
 # sam
-sam_checkpoint: "pretrained/sam_vit_h_4b8939.pth"
+# sam_checkpoint: "pretrained/sam_vit_h_4b8939.pth"
+sam_checkpoint: "/home/jie_zhenghao/Beyond-Fixed-Forms/pretrained/sam_vit_h_4b8939.pth"
 sam_url: "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth"
 
 # Aggregate
@@ -49,7 +51,7 @@ if_occurance_threshold: False
 occurance_threshold: 0.3 # points with occurance under lowest `occurance_threshold`% will be filtered out
 
 if_detected_ratio_threshold: True
-detected_ratio_threshold: 0.4 # points with detected ratio under lowest `detected_ratio_threshold`% will be filtered out
+detected_ratio_threshold: 0.3 # points with detected ratio under lowest `detected_ratio_threshold`% will be filtered out
 
 remove_filtered_masks: 0.5 # remove masks containing less than `remove_filtered_masks` percent points after filtering
 remove_small_masks: 100 # 3d masks with less than `remove_small_masks` points will be removed
@@ -57,11 +59,11 @@ remove_small_masks: 100 # 3d masks with less than `remove_small_masks` points wi
 # Final Refinement of stage 1/2
 stage_1_result_dir: "exp_stage_1/Result_OpenVocab_ISBNet-GSAM/final_result_hier_agglo/"
 
-refinment_sim_thres: 0.75
+refinment_sim_thres: 0.69
 refiment_iou_thres: 0.5 
 
 final_output_dir: "output/final_output"
 
 
 # prompt
-base_prompt: "headboard" #"Clothes, which has Buttons and Zippers" #, Pillow, Chair, Sofa, Bed, Desk, Monitor, Television, Book"
+base_prompt: "clothes" #"Clothes, which has Buttons and Zippers" #, Pillow, Chair, Sofa, Bed, Desk, Monitor, Television, Book"

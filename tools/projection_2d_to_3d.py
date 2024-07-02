@@ -19,7 +19,7 @@ from typing import List, Dict, Tuple
 
 
 sys.path.append("/medar_smart/temp/Beyond-Fixed-Forms/tools")
-from segmentation_2d import inference_grounded_sam
+# from segmentation_2d import inference_grounded_sam
 
 device = torch.device(
     "cuda"
@@ -186,9 +186,12 @@ def merge_masks(
     mask_indeces_to_be_merged = find_unconnected_subgraphs_tensor(merge_matrix)
     
     # filter mask aggregated from less than 3 masks
+
     mask_indeces_to_be_merged = [ mask_indeces for mask_indeces in mask_indeces_to_be_merged if len(mask_indeces) >= cfg.min_aggragated_masks]
+
     
     print("masks_to_be_merged", mask_indeces_to_be_merged)
+    
 
     # merge masks
     aggregated_masks = []
@@ -460,7 +463,7 @@ if __name__ == "__main__":
             image_files.sort(
                 key=lambda x: int(x.split(".")[0])
             )  # sort numerically, 1.jpg, 2.jpg, 3.jpg ...
-            downsampled_image_files = image_files[::10]  # get one image every 10 frames
+            downsampled_image_files = image_files[::cfg.downsample_ratio]  # get one image every 10 frames
             downsampled_images_paths = [
                 os.path.join(image_dir, f) for f in downsampled_image_files
             ]
@@ -531,6 +534,7 @@ if __name__ == "__main__":
                 > cfg.remove_filtered_masks * num_ins_points_before_filtering
             )
         ]
+        backprojected_3d_masks["conf"] = backprojected_3d_masks["conf"].to(device=device)
         # also delete the corresponding confidences and labels
         backprojected_3d_masks["conf"] = backprojected_3d_masks["conf"][
             (num_ins_points_after_filtering > cfg.remove_small_masks)

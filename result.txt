@@ -1,199 +1,199 @@
 class,class id,ap,ap50,ap25
-chair,nan,nan,nan
-table,nan,nan,nan
+chair,0.0,0.0,0.0
+table,0.0,0.0,0.0
 door,0.0,0.0,0.0
-couch,nan,nan,nan
+couch,0.0,0.0,0.0
 cabinet,0.0,0.0,0.0
-shelf,nan,nan,nan
+shelf,0.0,0.0,0.0
 desk,0.0,0.0,0.0
 office chair,0.0,0.0,0.0
 bed,0.0,0.0,0.0
 pillow,0.0,0.0,0.0
 sink,0.0,0.0,0.0
 picture,0.0,0.0,0.0
-window,nan,nan,nan
+window,0.0,0.0,0.0
 toilet,0.0,0.0,0.0
-bookshelf,nan,nan,nan
-monitor,nan,nan,nan
+bookshelf,0.0,0.0,0.0
+monitor,0.0,0.0,0.0
 curtain,0.0,0.0,0.0
-book,nan,nan,nan
-armchair,nan,nan,nan
-coffee table,nan,nan,nan
-box,nan,nan,nan
-refrigerator,nan,nan,nan
+book,0.0,0.0,0.0
+armchair,0.0,0.0,0.0
+coffee table,0.0,0.0,0.0
+box,0.0,0.0,0.0
+refrigerator,0.0,0.0,0.0
 lamp,0.0,0.0,0.0
-kitchen cabinet,nan,nan,nan
+kitchen cabinet,0.0,0.0,0.0
 towel,0.0,0.0,0.0
-clothes,0.06666666666666667,0.6,0.6
+clothes,0.0,0.0,0.06597222222222222
 tv,0.0,0.0,0.0
 nightstand,0.0,0.0,0.0
-counter,nan,nan,nan
-dresser,nan,nan,nan
-stool,nan,nan,nan
-cushion,nan,nan,nan
-plant,nan,nan,nan
+counter,0.0,0.0,0.0
+dresser,0.0,0.0,0.0
+stool,0.0,0.0,0.0
+cushion,0.0,0.0,0.0
+plant,0.0,0.0,0.0
 ceiling,0.0,0.0,0.0
 bathtub,0.0,0.0,0.0
-end table,nan,nan,nan
+end table,0.0,0.0,0.0
 dining table,nan,nan,nan
-keyboard,nan,nan,nan
-bag,nan,nan,nan
+keyboard,0.0,0.0,0.0
+bag,0.0,0.0,0.0
 backpack,0.0,0.0,0.0
 toilet paper,0.0,0.0,0.0
-printer,nan,nan,nan
+printer,0.0,0.0,0.0
 tv stand,nan,nan,nan
-whiteboard,nan,nan,nan
-blanket,nan,nan,nan
+whiteboard,0.0,0.0,0.0
+blanket,0.0,0.0,0.0
 shower curtain,0.0,0.0,0.0
 trash can,0.0,0.0,0.0
 closet,nan,nan,nan
-stairs,nan,nan,nan
-microwave,nan,nan,nan
-stove,nan,nan,nan
+stairs,0.0,0.0,0.0
+microwave,0.0,0.0,0.0
+stove,0.0,0.0,0.0
 shoe,0.0,0.0,0.0
-computer tower,nan,nan,nan
-bottle,nan,nan,nan
-bin,nan,nan,nan
-ottoman,nan,nan,nan
-bench,nan,nan,nan
-board,nan,nan,nan
-washing machine,nan,nan,nan
+computer tower,0.0,0.0,0.0
+bottle,0.0,0.0,0.0
+bin,0.0,0.0,0.0
+ottoman,0.0,0.0,0.0
+bench,0.0,0.0,0.0
+board,0.0,0.0,0.0
+washing machine,0.0,0.0,0.0
 mirror,0.0,0.0,0.0
-copier,nan,nan,nan
+copier,0.0,0.0,0.0
 basket,nan,nan,nan
 sofa chair,0.0,0.0,0.0
-file cabinet,nan,nan,nan
-fan,nan,nan,nan
-laptop,nan,nan,nan
-shower,nan,nan,nan
-paper,nan,nan,nan
-person,nan,nan,nan
-paper towel dispenser,nan,nan,nan
-oven,nan,nan,nan
-blinds,nan,nan,nan
-rack,nan,nan,nan
-plate,nan,nan,nan
-blackboard,nan,nan,nan
-piano,nan,nan,nan
+file cabinet,0.0,0.0,0.0
+fan,0.0,0.0,0.0
+laptop,0.0,0.0,0.0
+shower,0.0,0.0,0.0
+paper,0.0,0.0,0.0
+person,0.0,0.0,0.0
+paper towel dispenser,0.0,0.0,0.0
+oven,0.0,0.0,0.0
+blinds,0.0,0.0,0.0
+rack,0.0,0.0,0.0
+plate,0.0,0.0,0.0
+blackboard,0.0,0.0,0.0
+piano,0.0,0.0,0.0
 suitcase,0.0,0.0,0.0
-rail,nan,nan,nan
-radiator,nan,nan,nan
-recycling bin,nan,nan,nan
+rail,0.0,0.0,0.0
+radiator,0.0,0.0,0.0
+recycling bin,0.0,0.0,0.0
 container,nan,nan,nan
-wardrobe,nan,nan,nan
-soap dispenser,nan,nan,nan
-telephone,nan,nan,nan
-bucket,nan,nan,nan
-clock,nan,nan,nan
-stand,nan,nan,nan
-light,nan,nan,nan
-laundry basket,nan,nan,nan
-pipe,nan,nan,nan
-clothes dryer,nan,nan,nan
+wardrobe,0.0,0.0,0.0
+soap dispenser,0.0,0.0,0.0
+telephone,0.0,0.0,0.0
+bucket,0.0,0.0,0.0
+clock,0.0,0.0,0.0
+stand,0.0,0.0,0.0
+light,0.0,0.0,0.0
+laundry basket,0.0,0.0,0.0
+pipe,0.0,0.0,0.0
+clothes dryer,0.0,0.0,0.0
 guitar,nan,nan,nan
-toilet paper holder,nan,nan,nan
-seat,nan,nan,nan
+toilet paper holder,0.0,0.0,0.0
+seat,0.0,0.0,0.0
 speaker,nan,nan,nan
 column,nan,nan,nan
 bicycle,nan,nan,nan
-ladder,nan,nan,nan
-bathroom stall,nan,nan,nan
+ladder,0.0,0.0,0.0
+bathroom stall,0.0,0.0,0.0
 shower wall,0.0,0.0,0.0
-cup,nan,nan,nan
-jacket,nan,nan,nan
+cup,0.0,0.0,0.0
+jacket,0.0,0.0,0.0
 storage bin,nan,nan,nan
-coffee maker,nan,nan,nan
-dishwasher,nan,nan,nan
-paper towel roll,nan,nan,nan
+coffee maker,0.0,0.0,0.0
+dishwasher,0.0,0.0,0.0
+paper towel roll,0.0,0.0,0.0
 machine,nan,nan,nan
-mat,nan,nan,nan
-windowsill,nan,nan,nan
-bar,nan,nan,nan
-toaster,nan,nan,nan
-bulletin board,nan,nan,nan
-ironing board,nan,nan,nan
-fireplace,nan,nan,nan
-soap dish,nan,nan,nan
-kitchen counter,nan,nan,nan
+mat,0.0,0.0,0.0
+windowsill,0.0,0.0,0.0
+bar,0.0,0.0,0.0
+toaster,0.0,0.0,0.0
+bulletin board,0.0,0.0,0.0
+ironing board,0.0,0.0,0.0
+fireplace,0.0,0.0,0.0
+soap dish,0.0,0.0,0.0
+kitchen counter,0.0,0.0,0.0
 doorframe,0.0,0.0,0.0
-toilet paper dispenser,nan,nan,nan
+toilet paper dispenser,0.0,0.0,0.0
 mini fridge,0.0,0.0,0.0
-fire extinguisher,nan,nan,nan
+fire extinguisher,0.0,0.0,0.0
 ball,nan,nan,nan
 hat,nan,nan,nan
-shower curtain rod,nan,nan,nan
+shower curtain rod,0.0,0.0,0.0
 water cooler,nan,nan,nan
-paper cutter,nan,nan,nan
-tray,nan,nan,nan
-shower door,nan,nan,nan
-pillar,nan,nan,nan
-ledge,nan,nan,nan
+paper cutter,0.0,0.0,0.0
+tray,0.0,0.0,0.0
+shower door,0.0,0.0,0.0
+pillar,0.0,0.0,0.0
+ledge,0.0,0.0,0.0
 toaster oven,nan,nan,nan
 mouse,nan,nan,nan
-toilet seat cover dispenser,nan,nan,nan
-furniture,nan,nan,nan
-cart,nan,nan,nan
+toilet seat cover dispenser,0.0,0.0,0.0
+furniture,0.0,0.0,0.0
+cart,0.0,0.0,0.0
 storage container,nan,nan,nan
-scale,nan,nan,nan
-tissue box,nan,nan,nan
+scale,0.0,0.0,0.0
+tissue box,0.0,0.0,0.0
 light switch,nan,nan,nan
-crate,nan,nan,nan
-power outlet,nan,nan,nan
-decoration,nan,nan,nan
-sign,nan,nan,nan
-projector,nan,nan,nan
-closet door,nan,nan,nan
-vacuum cleaner,nan,nan,nan
+crate,0.0,0.0,0.0
+power outlet,0.0,0.0,0.0
+decoration,0.0,0.0,0.0
+sign,0.0,0.0,0.0
+projector,0.0,0.0,0.0
+closet door,0.0,0.0,0.0
+vacuum cleaner,0.0,0.0,0.0
 candle,nan,nan,nan
-plunger,nan,nan,nan
+plunger,0.0,0.0,0.0
 stuffed animal,nan,nan,nan
-headphones,nan,nan,nan
-dish rack,nan,nan,nan
-broom,nan,nan,nan
+headphones,0.0,0.0,0.0
+dish rack,0.0,0.0,0.0
+broom,0.0,0.0,0.0
 guitar case,nan,nan,nan
-range hood,nan,nan,nan
-dustpan,nan,nan,nan
+range hood,0.0,0.0,0.0
+dustpan,0.0,0.0,0.0
 hair dryer,nan,nan,nan
-water bottle,nan,nan,nan
+water bottle,0.0,0.0,0.0
 handicap bar,nan,nan,nan
 purse,nan,nan,nan
 vent,nan,nan,nan
 shower floor,nan,nan,nan
-water pitcher,nan,nan,nan
-mailbox,nan,nan,nan
-bowl,nan,nan,nan
-paper bag,nan,nan,nan
+water pitcher,0.0,0.0,0.0
+mailbox,0.0,0.0,0.0
+bowl,0.0,0.0,0.0
+paper bag,0.0,0.0,0.0
 alarm clock,nan,nan,nan
 music stand,nan,nan,nan
-projector screen,nan,nan,nan
-divider,nan,nan,nan
-laundry detergent,nan,nan,nan
-bathroom counter,nan,nan,nan
-object,nan,nan,nan
+projector screen,0.0,0.0,0.0
+divider,0.0,0.0,0.0
+laundry detergent,0.0,0.0,0.0
+bathroom counter,0.0,0.0,0.0
+object,0.0,0.0,0.0
 bathroom vanity,0.0,0.0,0.0
-closet wall,nan,nan,nan
-laundry hamper,nan,nan,nan
-bathroom stall door,nan,nan,nan
-ceiling light,nan,nan,nan
-trash bin,nan,nan,nan
-dumbbell,nan,nan,nan
-stair rail,nan,nan,nan
-tube,nan,nan,nan
-bathroom cabinet,nan,nan,nan
+closet wall,0.0,0.0,0.0
+laundry hamper,0.0,0.0,0.0
+bathroom stall door,0.0,0.0,0.0
+ceiling light,0.0,0.0,0.0
+trash bin,0.0,0.0,0.0
+dumbbell,0.0,0.0,0.0
+stair rail,0.0,0.0,0.0
+tube,0.0,0.0,0.0
+bathroom cabinet,0.0,0.0,0.0
 cd case,nan,nan,nan
 closet rod,nan,nan,nan
-coffee kettle,nan,nan,nan
+coffee kettle,0.0,0.0,0.0
 structure,nan,nan,nan
 shower head,nan,nan,nan
-keyboard piano,nan,nan,nan
-case of water bottles,nan,nan,nan
+keyboard piano,0.0,0.0,0.0
+case of water bottles,0.0,0.0,0.0
 coat rack,nan,nan,nan
 storage organizer,nan,nan,nan
-folded chair,nan,nan,nan
+folded chair,0.0,0.0,0.0
 fire alarm,nan,nan,nan
 power strip,nan,nan,nan
-calendar,nan,nan,nan
-poster,nan,nan,nan
+calendar,0.0,0.0,0.0
+poster,0.0,0.0,0.0
 potted plant,nan,nan,nan
 luggage,nan,nan,nan
-mattress,nan,nan,nan
+mattress,0.0,0.0,0.0
