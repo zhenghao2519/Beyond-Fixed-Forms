@@ -1,0 +1,6 @@
+[submodule "third_party/YOLO-World"]
+	path = third_party/YOLO-World
+	url = https://github.com/AILab-CVC/YOLO-World
+[submodule "third_party/EfficientSAM"]
+	path = third_party/EfficientSAM
+	url = https://github.com/yformer/EfficientSAM

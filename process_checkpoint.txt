@@ -1,0 +1,6 @@
+blinds:
+  segmentation_2d: true
+curtain:
+  segmentation_2d: true
+tv stand:
+  segmentation_2d: true

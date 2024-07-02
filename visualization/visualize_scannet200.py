@@ -491,10 +491,19 @@ class VisualizationScannet200:
                 continue
             tt_col[np.where(ins_label==n_label[i])] = pallete[i]
             if specific: # be more specific
-                print("Running ins mask", i, "with label", [sem_label[np.where(ins_label==n_label[i])][0]], CLASS_LABELS_200[ BENCHMARK_SEMANTIC_IDXS.index(sem_label[np.where(ins_label==n_label[i])][0])])
-                tt_col_specific = self.color.copy()
-                tt_col_specific[np.where(ins_label==n_label[i])] = pallete[i]
-                self.vis.add_points(f'GT instance: ' + str(i) + '_' + CLASS_LABELS_200[ BENCHMARK_SEMANTIC_IDXS.index(sem_label[np.where(ins_label==n_label[i])][0])], self.point, tt_col_specific, point_size=20, visible=True)
+                sem_class_idx = sem_label[np.where(ins_label == n_label[i])][0]
+                if sem_class_idx < len(CLASS_LABELS_200):
+                    class_name = CLASS_LABELS_200[sem_class_idx]
+                    print("Running ins mask", i, "with label", [sem_class_idx], class_name)
+                    tt_col_specific = self.color.copy()
+                    tt_col_specific[np.where(ins_label == n_label[i])] = pallete[i]
+                    self.vis.add_points(f'GT instance: ' + str(i) + '_' + class_name, self.point, tt_col_specific, point_size=20, visible=True)
+                else:
+                    print(f"Class index {sem_class_idx} is out of bounds for CLASS_LABELS_200")
+                # print("Running ins mask", i, "with label", [sem_label[np.where(ins_label==n_label[i])][0]], CLASS_LABELS_200[ BENCHMARK_SEMANTIC_IDXS.index(sem_label[np.where(ins_label==n_label[i])][0])])
+                # tt_col_specific = self.color.copy()
+                # tt_col_specific[np.where(ins_label==n_label[i])] = pallete[i]
+                # self.vis.add_points(f'GT instance: ' + str(i) + '_' + CLASS_LABELS_200[ BENCHMARK_SEMANTIC_IDXS.index(sem_label[np.where(ins_label==n_label[i])][0])], self.point, tt_col_specific, point_size=20, visible=True)
 
         self.vis.add_points(f'GT instance: ' + str(i), self.point, tt_col, point_size=20, visible=True)
         print('---Done---')
@@ -660,8 +669,8 @@ if __name__ == "__main__":
     check_superpointviz = False
     spp_path = './data/Scannet200/Scannet200_3D/val/superpoints/' + scene_id + '.pth'
     ## 2
-    check_gtviz = True
-    gt_path = './data/Scannet200/Scannet200_3D/val/groundtruth/' + scene_id + '.pth'
+    check_gtviz = False
+    gt_path = './data/Scannet200/Scannet200_3D/groundtruth/' + scene_id + '.pth'
     ## 3
     check_3dviz = False
     mask3d_path = './data/Scannet200/Scannet200_3D/val/isbnet_clsagnostic_scannet200/' + scene_id + '.pth'
@@ -679,6 +688,10 @@ if __name__ == "__main__":
     refined_path = os.path.join(cfg.final_output_dir, cfg.base_prompt, scene_id + '.pth')
     # agnostic_path = './data/Scannet200/Scannet200_3D/val/single_object_test/' + scene_id + '.pth'
 
+    # ## 8 visualize Open3DIS results
+    # check_open3dis_finalviz = True
+    # open3dis_final_path = '../exp/version_check/final_result_hier_agglo/' + scene_id + '.pth'
+
     pyviz3d_dir = '../viz' # visualization directory
 
     # Visualize Point Cloud 
@@ -692,7 +705,7 @@ if __name__ == "__main__":
     if check_superpointviz:
         VIZ.superpointviz(spp_path)
     if check_gtviz:
-        VIZ.gtviz(gt_path, specific = True)
+        VIZ.gtviz(gt_path, specific = False)
     if check_3dviz:
         VIZ.vizmask3d(mask3d_path, specific = False)
     if check_2dviz:

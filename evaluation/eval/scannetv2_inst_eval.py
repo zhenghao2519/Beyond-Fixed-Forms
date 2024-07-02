@@ -1,6 +1,7 @@
 import multiprocessing as mp
 import os
 from copy import deepcopy
+import matplotlib.pyplot as plt
 
 import numpy as np
 from evaluation.dataset.scannet200 import (
@@ -54,14 +55,16 @@ class ScanNetEval(object):
 
     def evaluate_matches(self, matches):
         ious = self.ious
-        min_region_sizes = [self.min_region_sizes[0]]
+        min_region_sizes = [self.min_region_sizes[0]] # only consider instances with num_points>= 100
         dist_threshes = [self.distance_threshes[0]]
         dist_confs = [self.distance_confs[0]]
 
         # results: class x iou
         ap = np.zeros((len(dist_threshes), len(self.eval_class_labels), len(ious)), float)
         rc = np.zeros((len(dist_threshes), len(self.eval_class_labels), len(ious)), float)
+
         # pr_curves = {label:{} for label in self.eva._class_labels}
+
         for di, (min_region_size, distance_thresh, distance_conf) in enumerate(
             zip(min_region_sizes, dist_threshes, dist_confs)
         ):
@@ -73,9 +76,10 @@ class ScanNetEval(object):
                             for p in matches[m]["pred"][label_name]:
                                 if "filename" in p:
                                     pred_visited[p["filename"]] = False
+
                 for li, label_name in enumerate(self.eval_class_labels):
-                    y_true = np.empty(0)
-                    y_score = np.empty(0)
+                    y_true = np.empty(0)    # i.e. ground truth
+                    y_score = np.empty(0)   # i.e. confidence
                     hard_false_negatives = 0
                     has_gt = False
                     has_pred = False
@@ -170,7 +174,7 @@ class ScanNetEval(object):
                         # compute precision recall curve first
 
                         # sorting and cumsum
-                        score_arg_sort = np.argsort(y_score)
+                        score_arg_sort = np.argsort(y_score) 
                         y_score_sorted = y_score[score_arg_sort]
                         y_true_sorted = y_true[score_arg_sort]
 
@@ -182,7 +186,7 @@ class ScanNetEval(object):
                         y_true_sorted_cumsum = np.cumsum(y_true_sorted)
 
                         # unique thresholds
-                        (thresholds, unique_indices) = np.unique(y_score_sorted, return_index=True)
+                        (thresholds, unique_indices) = np.unique(y_score_sorted, return_index=True) 
                         num_prec_recall = len(unique_indices) + 1
 
                         # prepare precision recall
@@ -218,17 +222,21 @@ class ScanNetEval(object):
 
                         stepWidths = np.convolve(recall_for_conv, [-0.5, 0, 0.5], "valid")
                         # integrate is now simply a dot product
-                        ap_current = np.dot(precision, stepWidths)
+                        ap_current = np.dot(precision, stepWidths) # ap_current is the area under the curve
 
+                        pr_curves[label_name][iou_th]=(precision, recall)
+                        # pr_points[label_name].append((recall, precision, iou_th))
+                        # pr_curves[(label_name, iou_th)] = [precision, recall]
                     elif has_gt:
                         ap_current = 0.0
                         rc_current = 0.0
-                    else:
+                    else: 
                         ap_current = float("nan")
                         rc_current = float("nan")
                     ap[di, li, oi] = ap_current
                     rc[di, li, oi] = rc_current
-        return ap, rc
+        return ap, rc, pr_curves
+        # shape: (len(dist_thresh), len(eval_class_labels), len(ious)), i.e. (1, 200, 11)
 
     def compute_averages(self, aps, rcs):
         d_inf = 0
@@ -280,7 +288,7 @@ class ScanNetEval(object):
         gts = gts_sem * self.encode_value + gts_ins
         gts[ignore_inds] = 0
         ############################################
-
+        # init gt_instances dict
         gt_instances = get_instances(gts, self.valid_class_ids, self.valid_class_labels, self.id2label, dataset = self.dataset_name)
         # associate
         if self.use_label:
@@ -318,7 +326,7 @@ class ScanNetEval(object):
             conf = pred["conf"]
             pred_mask = pred["pred_mask"]
             # pred_mask can be np.array or rle dict
-            assert pred_mask.shape[0] == gts.shape[0]
+            assert pred_mask.shape[0] == gts.shape[0] # num_points should be the same
 
             # convert to binary
             pred_mask = np.not_equal(pred_mask, 0)
@@ -450,6 +458,39 @@ class ScanNetEval(object):
 
         return gt2pred, pred2gt
 
+
+    def visualize_pr_curves(self, all_pr_curves, output_dir):
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+        for label_name, pr_curves in all_pr_curves.items():
+            if not pr_curves:
+                continue   # skip if no pr_curve dict
+
+            # plt.figure(figsize=(8, 8))
+            for iou, (precision, recall) in pr_curves.items():
+                print("iou:",iou, "pr:", precision, recall)
+                if len(precision) > 1 and len(recall) > 1:
+                    print(f"DEBUG, label_name: {label_name}, iou: {iou}, (precision, recall): {zip(precision, recall)}")
+                    plt.figure()
+                    # precision = np.concatenate([1.0], precision)
+                    # recall = np.concatenate([0.0], recall)
+                    # for i in range(len(precision)-2, -1, -1):
+                    #     precision[i] = max(precision[i], precision[i+1]) # make curve monotonically decreasing
+                    plt.plot(recall, precision, marker='o', linestyle='-', label=f'IoU={iou:.2f}')
+                # for p, r in zip(precision, recall):
+                #     plt.annotate(f'({p:.2f},{r:.2f})', xy=(r, p), textcoords='offset points', xytext=(5,5), ha='center', fontsize=6)
+            
+            plt.xlabel("Recall")
+            plt.ylabel("Precision")
+            plt.title(f"Precision-Recall curve for {label_name}")
+            plt.legend(loc='upper right')
+            plt.grid(True)
+            plt.xlim([0.0, 1.0])
+            plt.ylim([0.0, 1.0])
+            plt.savefig(os.path.join(output_dir, f'{label_name}_pr_curve.png'))
+            plt.close()
+
     def print_results(self, avgs):
         sep = ""
         col1 = ":"
@@ -504,6 +545,7 @@ class ScanNetEval(object):
         print("#" * lineLen)
         print()
 
+
     def write_result_file(self, avgs, filename):
         _SPLITTER = ","
         with open(filename, "w") as f:
@@ -514,7 +556,7 @@ class ScanNetEval(object):
                 ap25 = avgs["classes"][class_name]["ap25%"]
                 f.write(_SPLITTER.join([str(x) for x in [class_name, ap, ap50, ap25]]) + "\n")
 
-    def evaluate(self, pred_list, gt_sem_list, gt_ins_list, exp_path="./"):
+    def evaluate(self, pred_list, gt_sem_list, gt_ins_list, exp_path="./evaluation/eval_results"):
         """
         Args:
             pred_list:
@@ -525,6 +567,9 @@ class ScanNetEval(object):
                 for each scan:
                     for each point:
                         gt_id = class_id * self.encode_value + instance_id
+            pred_list.shape = (num_scans, num_instances)
+            gt_sem_list.shape = (num_scans, num_points)
+            gt_ins_list.shape = (num_scans, num_points)
         """
         # pool = mp.Pool(processes=16)
         # results = pool.starmap(self.assign_instances_for_scan, zip(pred_list, gt_sem_list, gt_ins_list))
@@ -538,19 +583,22 @@ class ScanNetEval(object):
             matches_key = f"gt_{i}"
             matches[matches_key] = {}
             matches[matches_key]["gt"] = gt2pred
-            matches[matches_key]["pred"] = pred2gt
-        ap_scores, rc_scores = self.evaluate_matches(matches)
+            matches[matches_key]["pred"] = pred2gt 
+        ap_scores, rc_scores, pr_curves = self.evaluate_matches(matches)
         avgs = self.compute_averages(ap_scores, rc_scores)
-
+        # matches = {"gt_0": {"gt": gt2pred, "pred": pred2gt}, "gt_1": {"gt": gt2pred, "pred": pred2gt}, ...}
         # print
+        os.makedirs(exp_path, exist_ok=True)
         self.write_result_file(avgs, os.path.join(exp_path, "result.txt"))
 
         if self.dataset_name == "scannet200" and self.use_label == True:
             self.print_ap_scannet200(avgs)
         else:
             self.print_results(avgs)
-
+        output_dir = os.path.join(exp_path, "pr_curves") 
+        self.visualize_pr_curves(pr_curves, output_dir=output_dir)
         return avgs
+    
 
     def evaluate_box(self, pred_list, gt_list, coords_list):
         """

@@ -114,7 +114,9 @@ if __name__ == "__main__":
                 mask = rle_decode(masks[ind])
             else:
                 mask = (masks[ind] == 1).numpy().astype(np.uint8)
+
             conf = score[ind] #
+
             # conf = 1.0
             final_class = float(category[ind])
             scene_id = scene.replace(".pth", "")
