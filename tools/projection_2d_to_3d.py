@@ -193,12 +193,9 @@ def merge_masks(
     mask_indeces_to_be_merged = [ mask_indeces for mask_indeces in mask_indeces_to_be_merged if len(mask_indeces) >= cfg.min_aggragated_masks]
 
     
-<<<<<<< HEAD
+
     # print("masks_to_be_merged", mask_indeces_to_be_merged)
-=======
-    print("masks_to_be_merged", mask_indeces_to_be_merged)
-    
->>>>>>> f883cf79cc69756fba3ad2bb3fcdbab0490ad7f8
+
 
     # merge masks
     aggregated_masks = []
