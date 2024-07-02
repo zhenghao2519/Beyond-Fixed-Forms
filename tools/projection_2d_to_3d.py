@@ -186,7 +186,9 @@ def merge_masks(
     mask_indeces_to_be_merged = find_unconnected_subgraphs_tensor(merge_matrix)
     
     # filter mask aggregated from less than 3 masks
-    # mask_indeces_to_be_merged = [ mask_indeces for mask_indeces in mask_indeces_to_be_merged if len(mask_indeces) >= cfg.min_aggragated_masks]
+
+    mask_indeces_to_be_merged = [ mask_indeces for mask_indeces in mask_indeces_to_be_merged if len(mask_indeces) >= cfg.min_aggragated_masks]
+
     
     print("masks_to_be_merged", mask_indeces_to_be_merged)
     
