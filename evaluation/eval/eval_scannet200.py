@@ -127,7 +127,7 @@ if __name__ == "__main__":
     # Read existing results
     existing_results = read_existing_results(results_filepath)
     # Prepare new results for the current class
-    new_results = f"{class_to_evaluate},{avgs['all_ap']},{avgs['all_ap_50%']},{avgs['all_ap_25%']}\n"
+    new_results = f"{class_to_evaluate},{avgs["classes"][class_to_evaluate]["ap"]},{avgs["classes"][class_to_evaluate]["ap50%"]},{avgs["classes"][class_to_evaluate]["ap25%"]}\n"
     # Update the results
     updated_results = update_results(existing_results, new_results, class_to_evaluate)
     # Write the updated results back to the file
