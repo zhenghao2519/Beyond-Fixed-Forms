@@ -36,6 +36,21 @@ def rle_decode(rle):
         mask[lo:hi] = 1
     return mask
 
+def scene_checkpoint_file(class_name):
+    return f"refinement_checkpoint_{class_name}.yaml"
+
+def read_scene_checkpoint(class_name):
+    checkpoint_file = scene_checkpoint_file(class_name)
+    if os.path.exists(checkpoint_file):
+        with open(checkpoint_file, 'r') as file:
+            return yaml.safe_load(file)
+    return {}
+
+def write_scene_checkpoint(class_name, checkpoint):
+    checkpoint_file = scene_checkpoint_file(class_name)
+    with open(checkpoint_file, 'w') as file:
+        yaml.safe_dump(checkpoint, file)
+
 
 def idx_to_label(idx):
     SCANNET200 = "chair.table.door.couch.cabinet.shelf.desk.office_chair.bed.pillow.sink.picture.window.toilet.bookshelf.monitor.curtain.book.armchair.coffee_table.box.refrigerator.lamp.kitchen_cabinet.towel.clothes.tv.nightstand.counter.dresser.stool.cushion.plant.ceiling.bathtub.end_table.dining_table.keyboard.bag.backpack.toilet_paper.printer.tv_stand.whiteboard.blanket.shower_curtain.trash_can.closet.stairs.microwave.stove.shoe.computer_tower.bottle.bin.ottoman.bench.board.washing_machine.mirror.copier.basket.sofa_chair.file_cabinet.fan.laptop.shower.paper.person.paper_towel_dispenser.oven.blinds.rack.plate.blackboard.piano.suitcase.rail.radiator.recycling_bin.container.wardrobe.soap_dispenser.telephone.bucket.clock.stand.light.laundry_basket.pipe.clothes_dryer.guitar.toilet_paper_holder.seat.speaker.column.bicycle.ladder.bathroom_stall.shower_wall.cup.jacket.storage_bin.coffee_maker.dishwasher.paper_towel_roll.machine.mat.windowsill.bar.toaster.bulletin_board.ironing_board.fireplace.soap_dish.kitchen_counter.doorframe.toilet_paper_dispenser.mini_fridge.fire_extinguisher.ball.hat.shower_curtain_rod.water_cooler.paper_cutter.tray.shower_door.pillar.ledge.toaster_oven.mouse.toilet_seat_cover_dispenser.furniture.cart.storage_container.scale.tissue_box.light_switch.crate.power_outlet.decoration.sign.projector.closet_door.vacuum_cleaner.candle.plunger.stuffed_animal.headphones.dish_rack.broom.guitar_case.range_hood.dustpan.hair_dryer.water_bottle.handicap_bar.purse.vent.shower_floor.water_pitcher.mailbox.bowl.paper_bag.alarm_clock.music_stand.projector_screen.divider.laundry_detergent.bathroom_counter.object.bathroom_vanity.closet_wall.laundry_hamper.bathroom_stall_door.ceiling_light.trash_bin.dumbbell.stair_rail.tube.bathroom_cabinet.cd_case.closet_rod.coffee_kettle.structure.shower_head.keyboard_piano.case_of_water_bottles.coat_rack.storage_organizer.folded_chair.fire_alarm.power_strip.calendar.poster.potted_plant.luggage.mattress"
@@ -111,6 +126,7 @@ Others
 def get_parser():
     parser = argparse.ArgumentParser(description="Configuration Beyond Fixed Forms")
     parser.add_argument("--config", type=str, required=True, help="Config")
+    parser.add_argument("--cls", type=str, required=True, help="Class")
     return parser
 
 
@@ -119,29 +135,33 @@ if __name__ == "__main__":
     args = get_parser().parse_args()
     cfg = Munch.fromDict(yaml.safe_load(open(args.config, "r").read()))
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    text_prompt = args.cls
+    scene_checkpoint = read_scene_checkpoint(text_prompt)
     
     clip_model, _ = clip.load("ViT-L/14", device=device)
 
     stage1_dir = cfg.stage_1_result_dir
     mask_3d_dir = cfg.mask_3d_dir
-    
-    stage2_output_dir = os.path.join(mask_3d_dir, cfg.base_prompt)
+
+    stage2_output_dir = os.path.join(mask_3d_dir, text_prompt)
     
     stage2_outputs = sorted([s for s in os.listdir(stage2_output_dir) if s.endswith("_00.pth")])
     # stage2_outputs = ["scene0435_00.pth"]
-    for stage2_output in tqdm(stage2_outputs):
+    for stage2_output in tqdm(stage2_outputs, desc="Refining stage1 output with stage2 outcomes"):
         scene_id = stage2_output.replace(".pth", "")
-        print("Working on", scene_id)
-        
+        if scene_checkpoint.get(scene_id, False):
+            continue
+        # print("Working on", scene_id)
+
         stage1_path = os.path.join(stage1_dir, f"{scene_id}.pth")
-        stage2_path = os.path.join(mask_3d_dir, cfg.base_prompt, f"{scene_id}.pth")
+        stage2_path = os.path.join(mask_3d_dir, text_prompt, f"{scene_id}.pth")
 
         if os.path.exists(stage1_path) and os.path.exists(stage2_path):
             pass
         else:
             continue
         
-        print(stage1_path, stage2_path)
+        # print(stage1_path, stage2_path)
 
         stage1_output = torch.load(stage1_path, map_location="cpu")
         stage2_output = torch.load(stage2_path, map_location="cpu")	
@@ -166,14 +186,14 @@ if __name__ == "__main__":
 
         # compute similarity between stage1 and stage2 labels
         matched_labels = [stage1_output["final_class"][idx] for idx in max_match]
-        text2 = cfg.base_prompt
+        text2 = text_prompt
         clip_similarities = [
             float(compute_clip_similarity(clip_model, text2, text1))
             for text1 in matched_labels
         ]
         
-        print("Matched labels:", matched_labels)
-        print("Clip similarities:", clip_similarities)
+        # print("Matched labels:", matched_labels)
+        # print("Clip similarities:", clip_similarities)
 
         # use stage2 masks to refine stage1 masks
         final_output = {
@@ -209,26 +229,28 @@ if __name__ == "__main__":
         # transform to torch.Tensor
         
         if len(final_output["ins"]) == 0:
-            print("No mask found")
+            # print("No mask found")
             torch.save(
                 final_output,
-                os.path.join(cfg.final_output_dir, cfg.base_prompt, f"{scene_id}.pth"),
+                os.path.join(cfg.final_output_dir, text_prompt, f"{scene_id}.pth"),
             )
             continue
             
         final_output["ins"] = torch.stack(final_output["ins"]).to(bool)
         final_output["conf"] = torch.stack(final_output["conf"])
-        print(
-            "Refined output shape:",
-            final_output["ins"].shape,
-            final_output["conf"].shape,
-            len(final_output["final_class"]),
-        )
-        print("Refined output classes:", final_output["final_class"])
+        # print(
+        #     "Refined output shape:",
+        #     final_output["ins"].shape,
+        #     final_output["conf"].shape,
+        #     len(final_output["final_class"]),
+        # )
+        # print("Refined output classes:", final_output["final_class"])
 
         # save the refined masks
-        os.makedirs(os.path.join(cfg.final_output_dir, cfg.base_prompt), exist_ok=True)
+        os.makedirs(os.path.join(cfg.final_output_dir, text_prompt), exist_ok=True)
         torch.save(
             final_output,
-            os.path.join(cfg.final_output_dir, cfg.base_prompt, f"{scene_id}.pth"),
+            os.path.join(cfg.final_output_dir, text_prompt, f"{scene_id}.pth"),
         )
+        scene_checkpoint[scene_id] = True
+        write_scene_checkpoint(text_prompt, scene_checkpoint)

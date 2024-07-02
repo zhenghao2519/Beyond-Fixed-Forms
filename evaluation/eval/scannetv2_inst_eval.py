@@ -61,6 +61,7 @@ class ScanNetEval(object):
         # results: class x iou
         ap = np.zeros((len(dist_threshes), len(self.eval_class_labels), len(ious)), float)
         rc = np.zeros((len(dist_threshes), len(self.eval_class_labels), len(ious)), float)
+        # pr_curves = {label:{} for label in self.eva._class_labels}
         for di, (min_region_size, distance_thresh, distance_conf) in enumerate(
             zip(min_region_sizes, dist_threshes, dist_confs)
         ):

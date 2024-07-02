@@ -55,7 +55,7 @@ remove_filtered_masks: 0.5 # remove masks containing less than `remove_filtered_
 remove_small_masks: 100 # 3d masks with less than `remove_small_masks` points will be removed
 
 # Final Refinement of stage 1/2
-stage_1_result_dir: "exp_stage_1/Result_OpenVocab_ISBNet-GSAM/final_result_hier_agglo/"
+stage_1_results_dir: "exp_stage_1/Result_OpenVocab_ISBNet-GSAM/final_result_hier_agglo/"
 
 refinment_sim_thres: 0.75
 refiment_iou_thres: 0.5 
@@ -64,4 +64,4 @@ final_output_dir: "output/final_output"
 
 
 # prompt
-base_prompt: "headboard" #"Clothes, which has Buttons and Zippers" #, Pillow, Chair, Sofa, Bed, Desk, Monitor, Television, Book"
+base_prompt: "" #"Clothes, which has Buttons and Zippers" #, Pillow, Chair, Sofa, Bed, Desk, Monitor, Television, Book"

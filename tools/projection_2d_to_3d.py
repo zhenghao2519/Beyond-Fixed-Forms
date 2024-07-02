@@ -14,12 +14,11 @@ from configs import config as cfg
 from munch import Munch
 
 from tqdm import tqdm
-import sys
 from typing import List, Dict, Tuple 
-
+import sys
 
 sys.path.append("/medar_smart/temp/Beyond-Fixed-Forms/tools")
-from segmentation_2d import inference_grounded_sam
+# from segmentation_2d import inference_grounded_sam
 
 device = torch.device(
     "cuda"
@@ -80,6 +79,10 @@ def compute_visible_masked_pts_tensor(
     visiable_pts = projected_pts[visibility_mask]  # (X, 2)
     for m in range(M):
         x, y = visiable_pts.T  # (X,)
+        # Ensure x and y are within bounds
+        valid_indices = (x >= 0) & (x < pred_masks.shape[2]) & (y >= 0) & (y < pred_masks.shape[1])
+        x, y = x[valid_indices], y[valid_indices]
+
         mask_check = pred_masks[m, y, x]  # (X,)
         masked_pts[m, visibility_mask] = mask_check
 
@@ -188,7 +191,7 @@ def merge_masks(
     # filter mask aggregated from less than 3 masks
     mask_indeces_to_be_merged = [ mask_indeces for mask_indeces in mask_indeces_to_be_merged if len(mask_indeces) >= cfg.min_aggragated_masks]
     
-    print("masks_to_be_merged", mask_indeces_to_be_merged)
+    # print("masks_to_be_merged", mask_indeces_to_be_merged)
 
     # merge masks
     aggregated_masks = []
@@ -287,13 +290,29 @@ def solve_overlapping(
 def get_parser():
     parser = argparse.ArgumentParser(description="Configuration Open3DIS")
     parser.add_argument("--config", type=str, required=True, help="Config")
+    parser.add_argument("--cls", type=str, required=True, help="Class")
     return parser
 
+def scene_checkpoint_file(class_name):
+    return f"projection_2d_to_3d_checkpoint_{class_name}.yaml"
+
+def read_scene_checkpoint(class_name):
+    checkpoint_file = scene_checkpoint_file(class_name)
+    if os.path.exists(checkpoint_file):
+        with open(checkpoint_file, 'r') as file:
+            return yaml.safe_load(file)
+    return {}
+
+def write_scene_checkpoint(class_name, checkpoint):
+    checkpoint_file = scene_checkpoint_file(class_name)
+    with open(checkpoint_file, 'w') as file:
+        yaml.safe_dump(checkpoint, file)
 
 if __name__ == "__main__":
 
     args = get_parser().parse_args()
     cfg = Munch.fromDict(yaml.safe_load(open(args.config, "r").read()))
+
     device = torch.device(
         "cuda"
         if torch.cuda.is_available()
@@ -312,14 +331,17 @@ if __name__ == "__main__":
     mask_2d_dir = cfg.mask_2d_dir
     scene_2d_dir = cfg.scene_2d_dir
     
-    seg_output_dir = os.path.join(mask_2d_dir, cfg.base_prompt)
+    text_prompt = args.cls
+    scene_checkpoint = read_scene_checkpoint(text_prompt)
+    seg_output_dir = os.path.join(mask_2d_dir, text_prompt)
     
     seg_outputs = sorted([s for s in os.listdir(seg_output_dir) if s.endswith("_00.pth")])
     # seg_outputs = ["scene0435_00.pth"]
-    for seg_output in tqdm(seg_outputs):
+    for seg_output in tqdm(seg_outputs, desc="Projecting 2d masks to 3d point cloud"):
         scene_id = seg_output[:-4]
-        print("Working on", scene_id)
-        
+        # print("Working on", scene_id)
+        if scene_checkpoint.get(scene_id, False):
+            continue
         cam_intr_path = os.path.join(scene_2d_dir, scene_id, "intrinsic", "intrinsic_color.txt")
 
         # intrinsic color
@@ -345,7 +367,7 @@ if __name__ == "__main__":
 
         # 2d sam masks
         # annotated_frame, segmented_frame_masks = inference_grounded_sam()
-        masks_2d_path = os.path.join(mask_2d_dir, cfg.base_prompt, f"{scene_id}.pth")
+        masks_2d_path = os.path.join(mask_2d_dir, text_prompt, f"{scene_id}.pth")
         gronded_sam_results = torch.load(masks_2d_path)
 
         masked_counts = torch.zeros(scene_pcd.shape[1]).to(
@@ -362,7 +384,7 @@ if __name__ == "__main__":
         for i in range(len(gronded_sam_results)):  # range(35,40):
 
             frame_id = gronded_sam_results[i]["frame_id"][:-4]
-            print("-------------------------frame", frame_id, "-------------------------")
+            # print("-------------------------frame", frame_id, "-------------------------")
             segmented_frame_masks = gronded_sam_results[i]["segmented_frame_masks"].to(torch.float32)  # (M, 1, W, H)
             confidences = gronded_sam_results[i]["confidences"]
             labels = gronded_sam_results[i]["labels"]
@@ -393,12 +415,12 @@ if __name__ == "__main__":
 
             masked_pts = torch.from_numpy(masked_pts).to(device)  # (M, N)
             mask_area = torch.sum(masked_pts, dim=1).detach().cpu().numpy()  # (M,)
-            print(
-                "number of 3d mask points:",
-                mask_area,
-                "number of 2d masks:",
-                pred_masks.sum(axis=(1, 2)),
-            )
+            # print(
+            #     "number of 3d mask points:",
+            #     mask_area,
+            #     "number of 2d masks:",
+            #     pred_masks.sum(axis=(1, 2)),
+            # )
 
             for i in range(masked_pts.shape[0]):
                 backprojected_3d_masks["ins"].append(masked_pts[i])
@@ -411,17 +433,17 @@ if __name__ == "__main__":
 
         """if no mask is detected"""
         if len(backprojected_3d_masks["ins"]) == 0:
-            print("No 3d masks detected")
+            # print("No 3d masks detected")
             # convert to tensor
             backprojected_3d_masks["ins"] = torch.tensor([]).to(device=device)  # (Ins, N)
             backprojected_3d_masks["conf"] = torch.tensor([]).to(device=device)  # (Ins, )
             backprojected_3d_masks["final_class"] = []  # (Ins,)
             
             # save the backprojected_3d_masks
-            os.makedirs(os.path.join(cfg.mask_3d_dir, cfg.base_prompt), exist_ok=True)
+            os.makedirs(os.path.join(cfg.mask_3d_dir, text_prompt), exist_ok=True)
             torch.save(
                 backprojected_3d_masks,
-                os.path.join(cfg.mask_3d_dir, cfg.base_prompt, f"{scene_id}.pth"),
+                os.path.join(cfg.mask_3d_dir, text_prompt, f"{scene_id}.pth"),
             )
             continue
         
@@ -443,12 +465,12 @@ if __name__ == "__main__":
         """Filtering 3d masks"""
         if cfg.if_occurance_threshold:
             occurance_counts = masked_counts.unique()
-            print("occurance count", masked_counts.unique())
+            # print("occurance count", masked_counts.unique())
             occurance_thres = cfg.occurance_threshold
             occurance_thres_value = occurance_counts[
                 round(occurance_thres * occurance_counts.shape[0])
             ]
-            print("occurance thres value", occurance_thres_value)
+            # print("occurance thres value", occurance_thres_value)
 
             # remove all the points under median occurance
             masked_counts[masked_counts < occurance_thres_value] = 0
@@ -498,18 +520,21 @@ if __name__ == "__main__":
                 viewed_counts += torch.tensor(visibility_mask).to(device=device)
 
             # only calculate non-zero viewed counts
-            print("viewed_counts", viewed_counts.unique())
+            # print("viewed_counts", viewed_counts.unique())
             detected_ratio = masked_counts / (viewed_counts + 1)  # avoid /0
-            print("detected_ratio", detected_ratio.unique())
+            # print("detected_ratio", detected_ratio.unique())
             detected_ratio_thres = cfg.detected_ratio_threshold
             detected_ratio_thres_value = detected_ratio.unique()[
                 round(detected_ratio_thres * detected_ratio.unique().shape[0])
             ]
-            print("detected_ratio_thres_value", detected_ratio_thres_value)
+            # print("detected_ratio_thres_value", detected_ratio_thres_value)
             masked_counts[detected_ratio < detected_ratio_thres_value] = 0
 
+        scene_checkpoint[scene_id] = True
+        write_scene_checkpoint(text_prompt, scene_checkpoint)
+
         masked_points = masked_counts > 0  # shape (N,)
-        print("final masked points", masked_points.sum())
+        # print("final masked points", masked_points.sum())
 
         # convert each value in backprojected_3d_masks to tensor
         backprojected_3d_masks["ins"] = backprojected_3d_masks["ins"]  # (Ins, N)
@@ -547,12 +572,12 @@ if __name__ == "__main__":
             > cfg.remove_filtered_masks * num_ins_points_before_filtering[i]
         ]
         
-        print("after filtering", backprojected_3d_masks["ins"].shape)
-        print("num_ins_points_after_filtering", backprojected_3d_masks["ins"].sum(dim=1))
+        # print("after filtering", backprojected_3d_masks["ins"].shape)
+        # print("num_ins_points_after_filtering", backprojected_3d_masks["ins"].sum(dim=1))
 
         # save the backprojected_3d_masks
-        os.makedirs(os.path.join(cfg.mask_3d_dir, cfg.base_prompt), exist_ok=True)
+        os.makedirs(os.path.join(cfg.mask_3d_dir, text_prompt), exist_ok=True)
         torch.save(
             backprojected_3d_masks,
-            os.path.join(cfg.mask_3d_dir, cfg.base_prompt, f"{scene_id}.pth"),
+            os.path.join(cfg.mask_3d_dir, text_prompt, f"{scene_id}.pth"),
         )
