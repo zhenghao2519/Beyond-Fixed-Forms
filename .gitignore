@@ -1,7 +1,8 @@
 data/**
 pretrained/**
 output/**
-exp_stage_1/**
+exp_stage_1/Result_OpenVocab_ISBNet-GSAM/final_result_hier_agglo/**
+!exp_stage_1/Result_OpenVocab_ISBNet-GSAM/final_result_hier_agglo/result.txt
 tmp
 debug.ipynb
 
@@ -9,6 +10,8 @@ third_party/**
 third_party/demo
 
 /*.yaml
+
+*.zip
 
 !README.md
 __pycache__
