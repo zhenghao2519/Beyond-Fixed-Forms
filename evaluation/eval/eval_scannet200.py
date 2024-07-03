@@ -10,7 +10,7 @@ import torch
 import sys
 sys.path.append("./")
 
-from evaluation.dataset.scannet200 import INSTANCE_CAT_SCANNET_200, BENCHMARK_SEMANTIC_IDXS
+from evaluation.dataset.scannet200 import INSTANCE_CAT_SCANNET_200, BENCHMARK_SEMANTIC_IDXS, HEAD_CATS_SCANNET_200,COMMON_CATS_SCANNET_200, TAIL_CATS_SCANNET_200, BASE_CLASSES_SCANNET200, NOVEL_CLASSES_SCANNET200
 from evaluation.eval.scannetv2_inst_eval import ScanNetEval
 from tqdm import tqdm
 
@@ -32,13 +32,20 @@ def get_parser():
     return parser
 
 def read_existing_results(filepath):
+    head_common_tail = True
+    base_novel = False
     if os.path.exists(filepath):
         with open(filepath, 'r') as file:
             return file.readlines()
     else:
         # Create a header if the file does not exist
-        header = ["class,class id,ap,ap50,ap25\n"]
-        return header + [f"{cls},-,-,-\n" for cls in INSTANCE_CAT_SCANNET_200]
+        header = ["class,class id,ap,ap50,ap25,rc,rc50,rc25\n"]
+        if head_common_tail:
+            return header + ["\n Head Classes: \n"] + [f"{cls},-,-,-\n" for cls in HEAD_CATS_SCANNET_200] + ["\n Common Classes: \n"] + [f"{cls},-,-,-\n" for cls in COMMON_CATS_SCANNET_200] + [" \n Tail Classes: \n"] + [f"{cls},-,-,-\n" for cls in TAIL_CATS_SCANNET_200]
+        elif base_novel:
+            return header + ["\n Base Classes:\n"] + [f"{cls},-,-,-\n" for cls in BASE_CLASSES_SCANNET200] + ["\n Novel Classes:\n"] + [f"{cls},-,-,-\n" for cls in NOVEL_CLASSES_SCANNET200]
+        else:
+            return header + [f"{cls},-,-,-\n" for cls in INSTANCE_CAT_SCANNET_200]
 
 def write_results(filepath, results):
     print("DEBUG writing results to", filepath)
@@ -116,9 +123,9 @@ if __name__ == "__main__":
             else:
                 mask = (masks[ind] == 1).numpy().astype(np.uint8)
 
-            conf = score[ind] #
+            # conf = score[ind] #
 
-            # conf = 1.0
+            conf = 1.0
             final_class = float(category[ind])
             scene_id = scene.replace(".pth", "")
             tmp.append({"scan_id": scene_id, "label_id": final_class + 1, "conf": conf, "pred_mask": mask})
@@ -131,7 +138,7 @@ if __name__ == "__main__":
     existing_results = read_existing_results(results_filepath)
     # Prepare new results for the current class
     print("DEBUG avg value",avgs["classes"][class_to_evaluate])
-    new_results = ",".join([class_to_evaluate, str(avgs["classes"][class_to_evaluate]["ap"]) , str(avgs["classes"][class_to_evaluate]["ap50%"]) , str(avgs["classes"][class_to_evaluate]["ap25%"]), "\n"])
+    new_results = ",".join([class_to_evaluate, str(avgs["classes"][class_to_evaluate]["ap"]) , str(avgs["classes"][class_to_evaluate]["ap50%"]) , str(avgs["classes"][class_to_evaluate]["ap25%"]),  str(avgs["classes"][class_to_evaluate]["rc"]),  str(avgs["classes"][class_to_evaluate]["rc50%"]),  str(avgs["classes"][class_to_evaluate]["rc25%"]),"\n"])
     #f"{avgs["classes"][class_to_evaluate]["ap"]},{avgs["classes"][class_to_evaluate]["ap50%"]},{avgs["classes"][class_to_evaluate]["ap25%"]}\n"
     # Update the results
     updated_results = update_results(existing_results, new_results, class_to_evaluate)

@@ -58,8 +58,9 @@ remove_small_masks: 100 # 3d masks with less than `remove_small_masks` points wi
 # Final Refinement of stage 1/2
 stage_1_results_dir: "exp_stage_1/Result_OpenVocab_ISBNet-GSAM/final_result_hier_agglo/"
 
-refinment_sim_thres: 0.71
-refiment_iou_thres: 0.5 
+refinment_sim_thres: 0.65 #0.71
+refinment_sim_percentile: 0.7
+refiment_iou_thres: 0.5
 
 final_output_dir: "output/final_output"
 

@@ -202,7 +202,7 @@ def merge_masks(
 
     
 
-    # print("masks_to_be_merged", mask_indeces_to_be_merged)
+    print("masks_to_be_merged", mask_indeces_to_be_merged)
 
 
     # merge masks
@@ -560,28 +560,28 @@ if __name__ == "__main__":
                 viewed_counts += torch.tensor(visibility_mask).to(device=device)
 
             # only calculate non-zero viewed counts
-            # print("viewed_counts", viewed_counts.unique())
+            print("viewed_counts", viewed_counts.unique())
             detected_ratio = masked_counts / (viewed_counts + 1)  # avoid /0
-            # print("detected_ratio", detected_ratio.unique())
+            print("detected_ratio", detected_ratio.unique())
             detected_ratio_thres = cfg.detected_ratio_threshold
             detected_ratio_thres_value = detected_ratio.unique()[
                 round(detected_ratio_thres * detected_ratio.unique().shape[0])
             ]
-            # print("detected_ratio_thres_value", detected_ratio_thres_value)
+            print("detected_ratio_thres_value", detected_ratio_thres_value)
             masked_counts[detected_ratio < detected_ratio_thres_value] = 0
 
         scene_checkpoint[scene_id] = True
         write_scene_checkpoint(text_prompt, scene_checkpoint)
 
         masked_points = masked_counts > 0  # shape (N,)
-        # print("final masked points", masked_points.sum())
+        print("final masked points", masked_points.sum())
 
         # convert each value in backprojected_3d_masks to tensor
         backprojected_3d_masks["ins"] = backprojected_3d_masks["ins"]  # (Ins, N)
         backprojected_3d_masks["conf"] = backprojected_3d_masks["conf"]  # (Ins,)
 
         # apply filtering on backprojected_3d_masks["ins"]
-        # print("before filtering", backprojected_3d_masks["ins"].shape)
+        print("before filtering", backprojected_3d_masks["ins"].shape)
         num_ins_points_before_filtering = backprojected_3d_masks["ins"].sum(dim=1)  # (Ins,)
         backprojected_3d_masks["ins"] &= masked_points.unsqueeze(0)  # (Ins, N)
         num_ins_points_after_filtering = backprojected_3d_masks["ins"].sum(dim=1)  # (Ins,)
@@ -613,8 +613,8 @@ if __name__ == "__main__":
             > cfg.remove_filtered_masks * num_ins_points_before_filtering[i]
         ]
         
-        # print("after filtering", backprojected_3d_masks["ins"].shape)
-        # print("num_ins_points_after_filtering", backprojected_3d_masks["ins"].sum(dim=1))
+        print("after filtering", backprojected_3d_masks["ins"].shape)
+        print("num_ins_points_after_filtering", backprojected_3d_masks["ins"].sum(dim=1))
 
         # save the backprojected_3d_masks
         os.makedirs(os.path.join(cfg.mask_3d_dir, text_prompt), exist_ok=True)

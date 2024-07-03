@@ -554,7 +554,12 @@ class ScanNetEval(object):
                 ap = avgs["classes"][class_name]["ap"]
                 ap50 = avgs["classes"][class_name]["ap50%"]
                 ap25 = avgs["classes"][class_name]["ap25%"]
-                f.write(_SPLITTER.join([str(x) for x in [class_name, ap, ap50, ap25]]) + "\n")
+                rc = avgs["classes"][class_name]["rc"]
+                rc50 = avgs["classes"][class_name]["rc50%"]
+                rc25 = avgs["classes"][class_name]["rc25%"]
+                f.write(_SPLITTER.join([str(x) for x in [class_name, ap, ap50, ap25,rc, rc50, rc25]]) + "\n")
+            f.write("all_ap, all_ap50, all_ap25, all_rc, all_rc50, all_rc25\n")
+            f.write(_SPLITTER.join([str(x) for x in [avgs["all_ap"], avgs["all_ap_50%"], avgs["all_ap_25%"], avgs["all_rc"], avgs["all_rc_50%"],avgs["all_rc_25%"]]]) + "\n")
 
     def evaluate(self, pred_list, gt_sem_list, gt_ins_list, exp_path="./evaluation/eval_results"):
         """

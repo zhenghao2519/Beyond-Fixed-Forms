@@ -1,157 +1,180 @@
-class,class id,ap,ap50,ap25
-chair,-,-,-
-table,-,-,-
-door,-,-,-
-couch,-,-,-
-cabinet,-,-,-
-shelf,-,-,-
-desk,-,-,-
-office chair,-,-,-
-bed,-,-,-
-pillow,0.12617795264787826,0.1654100955478569,0.17947238762646234,
-sink,-,-,-
-picture,-,-,-
-window,-,-,-
-toilet,-,-,-
-bookshelf,0.033941225564951334,0.07287656053765403,0.3723839804756122,
+class,class id,ap,ap50,ap25,rc,rc50,rc25
+
+ Head Classes: 
+tv stand,0.2785774958569314,0.5024154589371981,0.5025641025641026,0.5555555555555556,1.0,1.0,
+curtain,0.21207539819715757,0.3116830065359477,0.4344017094017094,0.40277777777777785,0.5833333333333334,0.7916666666666666,
+blinds,0.0,0.0,0.12551652892561985,0.0,0.0,0.25,
+shower curtain,0.3708191188890589,0.5058962264150944,0.5588235294117647,0.6851851851851852,0.9166666666666666,1.0,
+bookshelf,0.09829526419610903,0.14299272382157546,0.42062137248207576,0.19157088122605365,0.27586206896551724,0.7586206896551724,
+tv,0.35058198941401525,0.36828644501278773,0.4667272314331138,0.6732026143790849,0.7058823529411765,0.8823529411764706,
+kitchen cabinet,0.11244976768182223,0.1749070813771518,0.21748135874067936,0.21283255086071987,0.323943661971831,0.39436619718309857,
+pillow,0.29278711423915205,0.3688295016921461,0.3986959671576914,0.489159891598916,0.5975609756097561,0.6341463414634146,
+lamp,0.24641894235166964,0.3548720066061107,0.4452380952380952,0.4563492063492063,0.6428571428571429,0.7857142857142857,
+dresser,0.1498985930804216,0.1687396351575456,0.27225130890052357,0.2962962962962963,0.3333333333333333,0.5333333333333333,
 monitor,-,-,-
-curtain,0.045802531374134495,0.07963773199253343,0.12961383497134277,
-book,-,-,-
-armchair,-,-,-
-coffee table,-,-,-
-box,-,-,-
-refrigerator,-,-,-
-lamp,0.10548567245626084,0.18088393109166334,0.2785851871584647,
-kitchen cabinet,0.03901490134950842,0.089374243014707,0.13126685020440407,
-towel,-,-,-
-clothes,0.13718984964909914,0.22207425603225378,0.23288925996344026,
-tv,0.022814483294200858,0.024489785356283537,0.04476040760641237,
-nightstand,-,-,-
-counter,-,-,-
-dresser,0.017079115327360603,0.019471133402330552,0.03632600703576354,
-stool,-,-,-
-cushion,-,-,-
-plant,-,-,-
+object,-,-,-
 ceiling,-,-,-
+board,-,-,-
+stove,-,-,-
+closet wall,-,-,-
+couch,-,-,-
+office chair,-,-,-
+kitchen counter,-,-,-
+shower,-,-,-
+closet,-,-,-
+doorframe,-,-,-
+sofa chair,-,-,-
+mailbox,-,-,-
+nightstand,-,-,-
+washing machine,-,-,-
+picture,-,-,-
+book,-,-,-
+sink,-,-,-
+recycling bin,-,-,-
+table,-,-,-
+backpack,-,-,-
+shower wall,-,-,-
+toilet,-,-,-
+copier,-,-,-
+counter,-,-,-
+stool,-,-,-
+refrigerator,-,-,-
+window,-,-,-
+file cabinet,-,-,-
+chair,-,-,-
+plant,-,-,-
+coffee table,-,-,-
+stairs,-,-,-
+armchair,-,-,-
+cabinet,-,-,-
+bathroom vanity,-,-,-
+bathroom stall,-,-,-
+mirror,-,-,-
+blackboard,-,-,-
+trash can,-,-,-
+stair rail,-,-,-
+box,-,-,-
+towel,-,-,-
+door,-,-,-
+clothes,-,-,-
+whiteboard,-,-,-
+bed,-,-,-
 bathtub,-,-,-
-end table,-,-,-
+desk,-,-,-
+wardrobe,-,-,-
+clothes dryer,-,-,-
+radiator,-,-,-
+shelf,-,-,-
+
+ Common Classes: 
+cushion,0.0,0.0,0.500886524822695,0.0,0.0,1.0,
+end table,0.23601272619114924,0.30416666666666664,0.3043478260869565,0.4666666666666667,0.6,0.6,
 dining table,-,-,-
 keyboard,-,-,-
 bag,-,-,-
-backpack,-,-,-
 toilet paper,-,-,-
 printer,-,-,-
-tv stand,0.004095166301233173,0.006205276158217808,0.00688518285434585,
-whiteboard,-,-,-
 blanket,-,-,-
-shower curtain,0.13879678872742046,0.18747627555381602,0.2299965660080346,
-trash can,-,-,-
-closet,-,-,-
-stairs,-,-,-
 microwave,-,-,-
-stove,-,-,-
 shoe,-,-,-
 computer tower,-,-,-
 bottle,-,-,-
 bin,-,-,-
 ottoman,-,-,-
 bench,-,-,-
-board,-,-,-
-washing machine,-,-,-
-mirror,-,-,-
-copier,-,-,-
 basket,-,-,-
-sofa chair,-,-,-
-file cabinet,-,-,-
 fan,-,-,-
 laptop,-,-,-
-shower,-,-,-
-paper,-,-,-
 person,-,-,-
 paper towel dispenser,-,-,-
 oven,-,-,-
-blinds,0.0,0.0,0.0,
 rack,-,-,-
-plate,-,-,-
-blackboard,-,-,-
 piano,-,-,-
 suitcase,-,-,-
 rail,-,-,-
-radiator,-,-,-
-recycling bin,-,-,-
 container,-,-,-
-wardrobe,-,-,-
-soap dispenser,-,-,-
 telephone,-,-,-
-bucket,-,-,-
-clock,-,-,-
 stand,-,-,-
 light,-,-,-
 laundry basket,-,-,-
 pipe,-,-,-
-clothes dryer,-,-,-
-guitar,-,-,-
-toilet paper holder,-,-,-
 seat,-,-,-
-speaker,-,-,-
 column,-,-,-
 bicycle,-,-,-
 ladder,-,-,-
-bathroom stall,-,-,-
-shower wall,-,-,-
-cup,-,-,-
 jacket,-,-,-
 storage bin,-,-,-
 coffee maker,-,-,-
 dishwasher,-,-,-
-paper towel roll,-,-,-
 machine,-,-,-
 mat,-,-,-
 windowsill,-,-,-
+bulletin board,-,-,-
+fireplace,-,-,-
+mini fridge,-,-,-
+water cooler,-,-,-
+shower door,-,-,-
+pillar,-,-,-
+ledge,-,-,-
+furniture,-,-,-
+cart,-,-,-
+decoration,-,-,-
+closet door,-,-,-
+vacuum cleaner,-,-,-
+dish rack,-,-,-
+range hood,-,-,-
+projector screen,-,-,-
+divider,-,-,-
+bathroom counter,-,-,-
+laundry hamper,-,-,-
+bathroom stall door,-,-,-
+ceiling light,-,-,-
+trash bin,-,-,-
+bathroom cabinet,-,-,-
+structure,-,-,-
+storage organizer,-,-,-
+potted plant,-,-,-
+mattress,-,-,-
+ 
+ Tail Classes: 
+paper,-,-,-
+plate,-,-,-
+soap dispenser,-,-,-
+bucket,-,-,-
+clock,-,-,-
+guitar,-,-,-
+toilet paper holder,-,-,-
+speaker,-,-,-
+cup,-,-,-
+paper towel roll,-,-,-
 bar,-,-,-
 toaster,-,-,-
-bulletin board,-,-,-
 ironing board,-,-,-
-fireplace,-,-,-
 soap dish,-,-,-
-kitchen counter,-,-,-
-doorframe,-,-,-
 toilet paper dispenser,-,-,-
-mini fridge,-,-,-
 fire extinguisher,-,-,-
 ball,-,-,-
 hat,-,-,-
 shower curtain rod,-,-,-
-water cooler,-,-,-
 paper cutter,-,-,-
 tray,-,-,-
-shower door,-,-,-
-pillar,-,-,-
-ledge,-,-,-
 toaster oven,-,-,-
 mouse,-,-,-
 toilet seat cover dispenser,-,-,-
-furniture,-,-,-
-cart,-,-,-
 storage container,-,-,-
 scale,-,-,-
 tissue box,-,-,-
 light switch,-,-,-
 crate,-,-,-
 power outlet,-,-,-
-decoration,-,-,-
 sign,-,-,-
 projector,-,-,-
-closet door,-,-,-
-vacuum cleaner,-,-,-
 candle,-,-,-
 plunger,-,-,-
 stuffed animal,-,-,-
 headphones,-,-,-
-dish rack,-,-,-
 broom,-,-,-
 guitar case,-,-,-
-range hood,-,-,-
 dustpan,-,-,-
 hair dryer,-,-,-
 water bottle,-,-,-
@@ -160,40 +183,23 @@ purse,-,-,-
 vent,-,-,-
 shower floor,-,-,-
 water pitcher,-,-,-
-mailbox,-,-,-
 bowl,-,-,-
 paper bag,-,-,-
 alarm clock,-,-,-
 music stand,-,-,-
-projector screen,-,-,-
-divider,-,-,-
 laundry detergent,-,-,-
-bathroom counter,-,-,-
-object,-,-,-
-bathroom vanity,-,-,-
-closet wall,-,-,-
-laundry hamper,-,-,-
-bathroom stall door,-,-,-
-ceiling light,-,-,-
-trash bin,-,-,-
 dumbbell,-,-,-
-stair rail,-,-,-
 tube,-,-,-
-bathroom cabinet,-,-,-
 cd case,-,-,-
 closet rod,-,-,-
 coffee kettle,-,-,-
-structure,-,-,-
 shower head,-,-,-
 keyboard piano,-,-,-
 case of water bottles,-,-,-
 coat rack,-,-,-
-storage organizer,-,-,-
 folded chair,-,-,-
 fire alarm,-,-,-
 power strip,-,-,-
 calendar,-,-,-
 poster,-,-,-
-potted plant,-,-,-
 luggage,-,-,-
-mattress,-,-,-

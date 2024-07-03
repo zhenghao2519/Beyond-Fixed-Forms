@@ -302,7 +302,7 @@ def inference_grounded_sam(
             }
         )  # add keys "annotated_frame", "detected_boxes" if needed
 
-    # print(f"Number of images with at least one box detected: {num_img_with_boxes}")
+    print(f"Number of images with at least one box detected: {num_img_with_boxes}")
     return results
 
 

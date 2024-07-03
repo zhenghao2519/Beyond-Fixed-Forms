@@ -26,6 +26,7 @@ from evaluation.dataset.scannet200 import (
     VALID_CLASS_IDS_200_VALIDATION,
 )
 CHECKPOINT_FILE = "process_checkpoint.txt"
+# CHECKPOINT_FILE = "./checkpoints/process_checkpoint.txt"
 
 def run_command(command):
     try:
