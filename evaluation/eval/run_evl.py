@@ -100,7 +100,7 @@ if __name__ == "__main__":
     checkpoint = read_checkpoint()
 
     classes_to_process = HEAD_CATS_SCANNET_200[:10] + COMMON_CATS_SCANNET_200[:10] + TAIL_CATS_SCANNET_200[:10]
-
+    # classes_to_process = ["clothes"]
     for class_name in tqdm(classes_to_process, desc="Processing classes"):
         checkpoint.setdefault(class_name, {})
         print(colored(f"--------------Starting process for class: {class_name}--------------", "yellow", attrs=["bold"]))

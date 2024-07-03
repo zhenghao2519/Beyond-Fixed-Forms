@@ -242,8 +242,15 @@ def inference_grounded_sam(
         tqdm(image_paths, desc="Processing images", leave=False)
     ):
         frame_id = image_path.split("/")[-1]  # get frame id from image path
-        # print(frame_id)
         image_source, image = load_image(image_path)
+        
+        # reshape image_source to cfg.witdh_2d, cfg.height_2d
+        if image_source.size != (cfg.width_2d, cfg.height_2d):
+            # convert to PIL image
+            image_source = Image.fromarray(image_source)
+            image_source = image_source.resize((cfg.width_2d, cfg.height_2d))
+            image_source = np.array(image_source)
+        
         if image_source is None or image is None:  # skip the image if not loaded
             continue
         annotated_frame, detected_boxes, confidences, labels = detect(
@@ -442,7 +449,7 @@ if __name__ == "__main__":
     # scenes = ['scene0435_00']
     stage_1_results_dir = cfg.stage_1_results_dir
     scenes = sorted([f[:-4] for f in os.listdir(stage_1_results_dir) if f.endswith('00.pth') and not f.endswith('144_00.pth')])
-    
+    # scenes = ['scene0353_00']
     # print("Number of scenes:", len(scenes))
     
     groundingdino_model, sam_predictor = load_grounded_sam()
@@ -452,9 +459,10 @@ if __name__ == "__main__":
     for scene_id in tqdm(scenes, desc=f"2D Segmenting selected scenes", leave=False):
         if scene_checkpoint.get(scene_id, False):
             continue
-        if os.path.exists(os.path.join(mask_2d_dir, text_prompt, f"{scene_id}.pth")):
-            print(f"Segmentation 2D for {scene_id} already done, skipping.")
-            continue
+        # if os.path.exists(os.path.join(mask_2d_dir, text_prompt, f"{scene_id}.pth")):
+        #     print(f"Segmentation 2D for {scene_id} already done, skipping.")
+        #     # continue
+        print(f"Working on {scene_id}")
         image_dir = os.path.join(scene_2d_dir, scene_id, "color")
         image_files = [f for f in os.listdir(image_dir) if f.endswith(".jpg")]
         image_files.sort(

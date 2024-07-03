@@ -663,6 +663,7 @@ if __name__ == "__main__":
     
     # Scene ID to visualize
     scene_id = 'scene0435_00'
+    base_prompt = 'clothes'
 
     ##### The format follows the dataset tree
     ## 1
@@ -679,13 +680,13 @@ if __name__ == "__main__":
     mask2d_path = '../exp/version_sam/hier_agglo/' + scene_id + '.pth'
     ## 5 Visualize final mask of stage 1
     check_finalviz = False
-    agnostic_path = os.path.join(cfg.stage_1_result_dir, scene_id + '.pth')
+    agnostic_path = os.path.join(cfg.stage_1_results_dir, scene_id + '.pth')
     ## 6 Visualize final mask of stage 2 in each class
     check_singleviz = True
-    output_dir = os.path.join(cfg.mask_3d_dir, cfg.base_prompt)
+    output_dir = os.path.join(cfg.mask_3d_dir, base_prompt)
     ## 7 Visualize final refined masks
     check_refinedviz = True
-    refined_path = os.path.join(cfg.final_output_dir, cfg.base_prompt, scene_id + '.pth')
+    refined_path = os.path.join(cfg.final_output_dir, base_prompt, scene_id + '.pth')
     # agnostic_path = './data/Scannet200/Scannet200_3D/val/single_object_test/' + scene_id + '.pth'
 
     # ## 8 visualize Open3DIS results

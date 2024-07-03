@@ -224,7 +224,7 @@ class ScanNetEval(object):
                         # integrate is now simply a dot product
                         ap_current = np.dot(precision, stepWidths) # ap_current is the area under the curve
 
-                        pr_curves[label_name][iou_th]=(precision, recall)
+                        # pr_curves[label_name][iou_th]=(precision, recall)
                         # pr_points[label_name].append((recall, precision, iou_th))
                         # pr_curves[(label_name, iou_th)] = [precision, recall]
                     elif has_gt:
@@ -235,7 +235,7 @@ class ScanNetEval(object):
                         rc_current = float("nan")
                     ap[di, li, oi] = ap_current
                     rc[di, li, oi] = rc_current
-        return ap, rc, pr_curves
+        return ap, rc
         # shape: (len(dist_thresh), len(eval_class_labels), len(ious)), i.e. (1, 200, 11)
 
     def compute_averages(self, aps, rcs):
@@ -584,7 +584,7 @@ class ScanNetEval(object):
             matches[matches_key] = {}
             matches[matches_key]["gt"] = gt2pred
             matches[matches_key]["pred"] = pred2gt 
-        ap_scores, rc_scores, pr_curves = self.evaluate_matches(matches)
+        ap_scores, rc_scores = self.evaluate_matches(matches)
         avgs = self.compute_averages(ap_scores, rc_scores)
         # matches = {"gt_0": {"gt": gt2pred, "pred": pred2gt}, "gt_1": {"gt": gt2pred, "pred": pred2gt}, ...}
         # print
@@ -595,8 +595,8 @@ class ScanNetEval(object):
             self.print_ap_scannet200(avgs)
         else:
             self.print_results(avgs)
-        output_dir = os.path.join(exp_path, "pr_curves") 
-        self.visualize_pr_curves(pr_curves, output_dir=output_dir)
+        # output_dir = os.path.join(exp_path, "pr_curves") 
+        # self.visualize_pr_curves(pr_curves, output_dir=output_dir)
         return avgs
     
 

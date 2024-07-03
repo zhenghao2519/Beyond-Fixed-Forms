@@ -50,8 +50,8 @@ def compute_visibility_mask_tensor(pts, projected_pts, depth_im, depth_thresh=0.
     # compare z in camera coordinates and depth image
     # to check if there projected points are visible
     im_h, im_w = depth_im.shape
-
-    visibility_mask = np.zeros(projected_pts.shape[0]).astype(np.bool8)
+    # print("depth_im shape", depth_im.shape)
+    visibility_mask = np.zeros(projected_pts.shape[0]).astype(np.bool_)
     inbounds = (
         (projected_pts[:, 0] >= 0)
         & (projected_pts[:, 0] < im_w)
@@ -73,15 +73,16 @@ def compute_visible_masked_pts_tensor(
 ):
     # return masked 3d points
     N = scene_pts.shape[0]
-    M, _, _ = pred_masks.shape  # (M, H, W)
+    M, H, W = pred_masks.shape  # (M, H, W)
+    # print("DEBUG mask shape value", H, W)
     # print("DEBUG M value", M)
     masked_pts = np.zeros((M, N), dtype=np.bool_)
     visiable_pts = projected_pts[visibility_mask]  # (X, 2)
     for m in range(M):
         x, y = visiable_pts.T  # (X,)
-        # Ensure x and y are within bounds
-        valid_indices = (x >= 0) & (x < pred_masks.shape[2]) & (y >= 0) & (y < pred_masks.shape[1])
-        x, y = x[valid_indices], y[valid_indices]
+        # # Ensure x and y are within bounds
+        # valid_indices = (x >= 0) & (x < pred_masks.shape[2]) & (y >= 0) & (y < pred_masks.shape[1])
+        # x, y = x[valid_indices], y[valid_indices]
 
         mask_check = pred_masks[m, y, x]  # (X,)
         masked_pts[m, visibility_mask] = mask_check
@@ -126,6 +127,13 @@ def aggregate(
         mask_indeces_to_be_merged,
     ) = merge_masks(ins_masks, confidences, labels, merge_matrix)
 
+    if mask_indeces_to_be_merged == []:
+        return {
+            "ins": torch.tensor([[]]).to(device=device),  # (Ins, N)
+            "conf": torch.tensor([]).to(device=device),  # (Ins, )
+            "final_class": [],  # (Ins,)
+        }
+    
     # solve overlapping
     final_masks = solve_overlapping(aggregated_masks, mask_indeces_to_be_merged)
 
@@ -215,7 +223,17 @@ def merge_masks(
         aggregated_confidences.append(sum(conf) / len(conf))
         aggregated_labels.append(labels[mask_indeces[0]])
 
-    # convert type
+
+
+    if len(aggregated_masks) == 0:
+        return (
+            torch.tensor([[]]).to(device=device),  # (Ins, N)
+            torch.tensor([]).to(device=device),  # (Ins, )
+            [],  # (Ins,)
+            [],
+        )
+    
+    # convert type 
     aggregated_masks = torch.stack(aggregated_masks)  # (Ins, N)
     aggregated_confidences = torch.tensor(aggregated_confidences)  # (Ins, )
 
@@ -340,10 +358,10 @@ if __name__ == "__main__":
     seg_output_dir = os.path.join(mask_2d_dir, text_prompt)
     
     seg_outputs = sorted([s for s in os.listdir(seg_output_dir) if s.endswith("_00.pth")])
-    # seg_outputs = ["scene0435_00.pth"]
+    # seg_outputs = ["scene0353_00.pth"]
     for seg_output in tqdm(seg_outputs, desc="Projecting 2d masks to 3d point cloud"):
         scene_id = seg_output[:-4]
-        # print("Working on", scene_id)
+        print("Working on", scene_id)
         if scene_checkpoint.get(scene_id, False):
             continue
         cam_intr_path = os.path.join(scene_2d_dir, scene_id, "intrinsic", "intrinsic_color.txt")
@@ -385,7 +403,7 @@ if __name__ == "__main__":
             "final_class": [],  # (Ins,)
         }
 
-        for i in range(len(gronded_sam_results)):  # range(35,40):
+        for i in range(len(gronded_sam_results)):  
 
             frame_id = gronded_sam_results[i]["frame_id"][:-4]
             # print("-------------------------frame", frame_id, "-------------------------")
@@ -435,11 +453,12 @@ if __name__ == "__main__":
                 # print("single_mask shape", mask.shape, "all mask shape", masked_counts.shape)
                 masked_counts[mask] += 1
 
+
         """if no mask is detected"""
-        if len(backprojected_3d_masks["ins"]) == 0:
-            # print("No 3d masks detected")
+        if len(backprojected_3d_masks["conf"]) == 0:
+            print("No 3d masks detected in backprojection!")
             # convert to tensor
-            backprojected_3d_masks["ins"] = torch.tensor([]).to(device=device)  # (Ins, N)
+            backprojected_3d_masks["ins"] = torch.tensor([[]]).to(device=device)  # (Ins, N)
             backprojected_3d_masks["conf"] = torch.tensor([]).to(device=device)  # (Ins, )
             backprojected_3d_masks["final_class"] = []  # (Ins,)
             
@@ -465,6 +484,22 @@ if __name__ == "__main__":
             iou_threshold=cfg.iou_thres,
             feature_similarity_threshold=cfg.similarity_thres,
         )
+        
+        """if no mask is detected"""
+        if len(backprojected_3d_masks["conf"]) == 0:
+            print("No 3d masks detected after aggregation")
+            # convert to tensor
+            backprojected_3d_masks["ins"] = torch.tensor([[]]).to(device=device)  # (Ins, N)
+            backprojected_3d_masks["conf"] = torch.tensor([]).to(device=device)  # (Ins, )
+            backprojected_3d_masks["final_class"] = []  # (Ins,)
+            
+            # save the backprojected_3d_masks
+            os.makedirs(os.path.join(cfg.mask_3d_dir, text_prompt), exist_ok=True)
+            torch.save(
+                backprojected_3d_masks,
+                os.path.join(cfg.mask_3d_dir, text_prompt, f"{scene_id}.pth"),
+            )
+            continue
 
         """Filtering 3d masks"""
         if cfg.if_occurance_threshold:
@@ -480,6 +515,7 @@ if __name__ == "__main__":
             masked_counts[masked_counts < occurance_thres_value] = 0
 
         elif cfg.if_detected_ratio_threshold:
+            # print("DEBUG detected ratio threshold")
             image_dir = os.path.join(scene_2d_dir, scene_id, "color")
 
             image_files = [f for f in os.listdir(image_dir) if f.endswith(".jpg")]

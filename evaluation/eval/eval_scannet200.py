@@ -38,9 +38,10 @@ def read_existing_results(filepath):
     else:
         # Create a header if the file does not exist
         header = ["class,class id,ap,ap50,ap25\n"]
-        return header + [f"{cls},0,0,0\n" for cls in INSTANCE_CAT_SCANNET_200]
+        return header + [f"{cls},-,-,-\n" for cls in INSTANCE_CAT_SCANNET_200]
 
 def write_results(filepath, results):
+    print("DEBUG writing results to", filepath)
     with open(filepath, 'w') as file:
         file.writelines(results)
 
@@ -129,7 +130,9 @@ if __name__ == "__main__":
     # Read existing results
     existing_results = read_existing_results(results_filepath)
     # Prepare new results for the current class
-    new_results = f"{class_to_evaluate},{avgs["classes"][class_to_evaluate]["ap"]},{avgs["classes"][class_to_evaluate]["ap50%"]},{avgs["classes"][class_to_evaluate]["ap25%"]}\n"
+    print("DEBUG avg value",avgs["classes"][class_to_evaluate])
+    new_results = ",".join([class_to_evaluate, str(avgs["classes"][class_to_evaluate]["ap"]) , str(avgs["classes"][class_to_evaluate]["ap50%"]) , str(avgs["classes"][class_to_evaluate]["ap25%"]), "\n"])
+    #f"{avgs["classes"][class_to_evaluate]["ap"]},{avgs["classes"][class_to_evaluate]["ap50%"]},{avgs["classes"][class_to_evaluate]["ap25%"]}\n"
     # Update the results
     updated_results = update_results(existing_results, new_results, class_to_evaluate)
     # Write the updated results back to the file

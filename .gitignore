@@ -8,5 +8,7 @@ debug.ipynb
 third_party/**
 third_party/demo
 
+/*.yaml
+
 !README.md
 __pycache__

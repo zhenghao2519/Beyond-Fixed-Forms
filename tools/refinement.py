@@ -140,7 +140,7 @@ if __name__ == "__main__":
     
     clip_model, _ = clip.load("ViT-L/14", device=device)
 
-    stage1_dir = cfg.stage_1_result_dir
+    stage1_dir = cfg.stage_1_results_dir
     mask_3d_dir = cfg.mask_3d_dir
 
     stage2_output_dir = os.path.join(mask_3d_dir, text_prompt)
@@ -149,8 +149,8 @@ if __name__ == "__main__":
     # stage2_outputs = ["scene0435_00.pth"]
     for stage2_output in tqdm(stage2_outputs, desc="Refining stage1 output with stage2 outcomes"):
         scene_id = stage2_output.replace(".pth", "")
-        if scene_checkpoint.get(scene_id, False):
-            continue
+        # if scene_checkpoint.get(scene_id, False):
+        #     continue
         # print("Working on", scene_id)
 
         stage1_path = os.path.join(stage1_dir, f"{scene_id}.pth")
@@ -167,8 +167,9 @@ if __name__ == "__main__":
         stage2_output = torch.load(stage2_path, map_location="cpu")	
         
         """If stage 2 is empty, save empty output and continue"""
-        if len(stage2_output["ins"]) == 0:
+        if len(stage2_output["conf"]) == 0:
             print("Empty stage 2 mask")
+            os.makedirs(os.path.join(cfg.final_output_dir, text_prompt), exist_ok=True)
             torch.save(
                 stage2_output,
                 os.path.join(cfg.final_output_dir, cfg.base_prompt, f"{scene_id}.pth"),
@@ -201,8 +202,8 @@ if __name__ == "__main__":
             for text1 in matched_labels
         ]
         
-        # print("Matched labels:", matched_labels)
-        # print("Clip similarities:", clip_similarities)
+        print("Matched labels:", matched_labels)
+        print("Clip similarities:", clip_similarities)
 
         # use stage2 masks to refine stage1 masks
         final_output = {
@@ -214,31 +215,36 @@ if __name__ == "__main__":
         iou_thres = cfg.refiment_iou_thres
 
         for i, idx in enumerate(max_match):  # i in stage2, idx in stage1
-            if clip_similarities[i] < sim_thres:
-                continue
-
+            
+            # i in stage2, idx in stage1
             if iou_matrix[i, idx] > iou_thres:
                 # use stage1 mask
+                if clip_similarities[i] < sim_thres:
+                    continue
                 final_output["ins"].append(stage1_output["ins"][idx])
-                final_output["conf"].append(stage1_output["conf"][idx])
-                # use corresponding stage2 label
+                # final_output["conf"].append(stage1_output["conf"][idx])
+                # use corresponding stage2 conf and label
+                final_output["conf"].append(stage2_output["conf"][i])
                 final_output["final_class"].append(stage2_output["final_class"][i])
             else:
                 # use intersection of stage1 and stage2 mask
                 final_output["ins"].append(
                     stage1_output["ins"][idx] * stage2_output["ins"][i]
                 )
+                # # use corresponding stage2 conf
+                final_output["conf"].append(stage2_output["conf"][i])
                 # average confidence
-                final_output["conf"].append(
-                    (stage1_output["conf"][idx] + stage2_output["conf"][i]) / 2
-                )
+                # final_output["conf"].append(
+                #     (stage1_output["conf"][idx] + 4 * stage2_output["conf"][i]) / 2
+                # )
                 # use corresponding stage2 label
                 final_output["final_class"].append(stage2_output["final_class"][i])
 
         # transform to torch.Tensor
         
         if len(final_output["ins"]) == 0:
-            # print("No mask found")
+            print("No mask after refinement")
+            os.makedirs(os.path.join(cfg.final_output_dir, text_prompt), exist_ok=True)
             torch.save(
                 final_output,
                 os.path.join(cfg.final_output_dir, text_prompt, f"{scene_id}.pth"),
