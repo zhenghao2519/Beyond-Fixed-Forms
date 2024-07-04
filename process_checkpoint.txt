@@ -1,12 +1,12 @@
 blinds:
-  evaluation: false
+  evaluation: true
   projection_2d_to_3d: true
-  refinement: false
+  refinement: true
   segmentation_2d: true
 bookshelf:
-  evaluation: false
+  evaluation: true
   projection_2d_to_3d: true
-  refinement: false
+  refinement: true
   segmentation_2d: true
 clothes:
   evaluation: false
@@ -19,44 +19,49 @@ curtain:
   refinement: true
   segmentation_2d: true
 cushion:
-  evaluation: false
+  evaluation: true
   projection_2d_to_3d: true
-  refinement: false
+  refinement: true
+  segmentation_2d: true
+dining table:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
   segmentation_2d: true
 dresser:
-  evaluation: false
+  evaluation: true
   projection_2d_to_3d: true
-  refinement: false
+  refinement: true
   segmentation_2d: true
 end table:
-  evaluation: false
+  evaluation: true
   projection_2d_to_3d: true
-  refinement: false
+  refinement: true
   segmentation_2d: true
 kitchen cabinet:
-  evaluation: false
+  evaluation: true
   projection_2d_to_3d: true
-  refinement: false
+  refinement: true
   segmentation_2d: true
 lamp:
-  evaluation: false
+  evaluation: true
   projection_2d_to_3d: true
-  refinement: false
+  refinement: true
   segmentation_2d: true
 pillow:
-  evaluation: false
+  evaluation: true
   projection_2d_to_3d: true
-  refinement: false
+  refinement: true
   segmentation_2d: true
 shower curtain:
-  evaluation: false
+  evaluation: true
   projection_2d_to_3d: true
-  refinement: false
+  refinement: true
   segmentation_2d: true
 tv:
-  evaluation: false
+  evaluation: true
   projection_2d_to_3d: true
-  refinement: false
+  refinement: true
   segmentation_2d: true
 tv stand:
   evaluation: true

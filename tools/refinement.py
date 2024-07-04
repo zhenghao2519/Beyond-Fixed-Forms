@@ -37,7 +37,8 @@ def rle_decode(rle):
     return mask
 
 def scene_checkpoint_file(class_name):
-    return f"refinement_checkpoint_{class_name}.yaml"
+    # return f"refinement_checkpoint_{class_name}.yaml"
+    return f"./checkpoints/refinement_checkpoint_{class_name}.yaml"
 
 def read_scene_checkpoint(class_name):
     checkpoint_file = scene_checkpoint_file(class_name)
@@ -236,7 +237,9 @@ if __name__ == "__main__":
     
     
     
-    for s, ious in tqdm(enumerate(all_ious), desc="Refining stage1 output with stage2 outcomes"):
+    for s, stage2_output in tqdm(enumerate(stage2_outputs), desc="Refining stage1 output with stage2 outcomes"):
+        scene_id = stage2_output.replace(".pth", "")
+        
         # use stage2 masks to refine stage1 masks
         final_output = {
             "ins": [],  # (Ins, N) torch.Tensor
@@ -244,12 +247,13 @@ if __name__ == "__main__":
             "final_class": [],  # (Ins,) List[str]
         }
         
+        ious = all_ious[s]
         if len(ious) == 0:
             # print("Empty stage 2 mask")
             os.makedirs(os.path.join(cfg.final_output_dir, text_prompt), exist_ok=True)
             torch.save(
                 stage2_output,
-                os.path.join(cfg.final_output_dir, cfg.base_prompt, f"{scene_id}.pth"),
+                os.path.join(cfg.final_output_dir, text_prompt, f"{scene_id}.pth"),
             )
         
         for m, iou in enumerate(ious) :  # i in stage2, idx in stage1

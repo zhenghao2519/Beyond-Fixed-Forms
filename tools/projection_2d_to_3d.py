@@ -316,7 +316,8 @@ def get_parser():
     return parser
 
 def scene_checkpoint_file(class_name):
-    return f"projection_2d_to_3d_checkpoint_{class_name}.yaml"
+    # return f"projection_2d_to_3d_checkpoint_{class_name}.yaml"
+    return f"checkpoints/projection_2d_to_3d_checkpoint.yaml"
 
 def read_scene_checkpoint(class_name):
     checkpoint_file = scene_checkpoint_file(class_name)
@@ -567,7 +568,7 @@ if __name__ == "__main__":
             detected_ratio_thres_value = detected_ratio.unique()[
                 round(detected_ratio_thres * detected_ratio.unique().shape[0])
             ]
-            print("detected_ratio_thres_value", detected_ratio_thres_value)
+            # print("detected_ratio_thres_value", detected_ratio_thres_value)
             masked_counts[detected_ratio < detected_ratio_thres_value] = 0
 
         scene_checkpoint[scene_id] = True

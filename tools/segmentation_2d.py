@@ -407,7 +407,8 @@ def get_parser():
     return parser
 
 def scene_checkpoint_file(class_name):
-    return f"segmentation_2d_checkpoint_{class_name}.yaml"
+    # return f"segmentation_2d_checkpoint_{class_name}.yaml"
+    return f"./checkpoints/segmentation_2d_checkpoint_{class_name}.yaml"
 
 def read_scene_checkpoint(class_name):
     checkpoint_file = scene_checkpoint_file(class_name)
