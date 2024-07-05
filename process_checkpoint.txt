@@ -38,6 +38,11 @@ end table:
   projection_2d_to_3d: true
   refinement: true
   segmentation_2d: true
+keyboard:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
 kitchen cabinet:
   evaluation: true
   projection_2d_to_3d: true

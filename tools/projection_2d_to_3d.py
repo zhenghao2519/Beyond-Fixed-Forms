@@ -19,6 +19,7 @@ import sys
 
 sys.path.append("/medar_smart/temp/Beyond-Fixed-Forms/tools")
 # from segmentation_2d import inference_grounded_sam
+from utils.rle_encode_decode import encode_2d_masks, decode_2d_masks
 
 device = torch.device(
     "cuda"
@@ -392,6 +393,10 @@ if __name__ == "__main__":
         # annotated_frame, segmented_frame_masks = inference_grounded_sam()
         masks_2d_path = os.path.join(mask_2d_dir, text_prompt, f"{scene_id}.pth")
         gronded_sam_results = torch.load(masks_2d_path)
+        
+        # convert rle to masks
+        # print("converting rle to masks")
+        gronded_sam_results = decode_2d_masks(gronded_sam_results, (cfg.height_2d, cfg.width_2d))
 
         masked_counts = torch.zeros(scene_pcd.shape[1]).to(
             device=device

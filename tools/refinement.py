@@ -59,7 +59,6 @@ def idx_to_label(idx):
     class_names = SCANNET200.split(".")
     return class_names[idx]
 
-
 """
 2. Find matched masks between stages
 """

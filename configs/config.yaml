@@ -12,7 +12,7 @@ scene_npy_dir: "./data/Scannet200/Scannet200_3D/original_npy_files"
 # depth_im_dir: "data/Scannet200/Scannet200_2D_5interval/val/scene0435_00/depth/"
 scene_2d_dir: "./data/Scannet200/Scannet200_2D"
 
-mask_2d_dir: "./output/mask_2d"
+mask_2d_dir: "./output/mask_2d/rle"
 mask_3d_dir: "./output/mask_3d"
 
 # rgb photo resolution

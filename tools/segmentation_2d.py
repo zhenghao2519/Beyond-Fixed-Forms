@@ -38,6 +38,8 @@ try:
 except ImportError:
     BICUBIC = Image.BICUBIC
 
+from utils.rle_encode_decode import encode_2d_masks, decode_2d_masks
+
 # Device
 device = torch.device(
     "cuda"
@@ -493,6 +495,10 @@ if __name__ == "__main__":
             )
             os.makedirs(os.path.join(mask_2d_dir, text_prompt), exist_ok=True)
             mask_2d_path = os.path.join(mask_2d_dir, text_prompt, f"{scene_id}.pth")
+            
+            # convert all masks to rle encoding
+            grounded_sam_results = encode_2d_masks(grounded_sam_results)
+             
             torch.save(
                 grounded_sam_results, mask_2d_path
             )  # save all segmented frame masks in a file
