@@ -685,13 +685,13 @@ if __name__ == "__main__":
     check_singleviz = True
     output_dir = os.path.join(cfg.mask_3d_dir, base_prompt)
     ## 7 Visualize final refined masks
-    check_refinedviz = True
+    check_refinedviz = False
     refined_path = os.path.join(cfg.final_output_dir, base_prompt, scene_id + '.pth')
     # agnostic_path = './data/Scannet200/Scannet200_3D/val/single_object_test/' + scene_id + '.pth'
 
-    # ## 8 visualize Open3DIS results
-    # check_open3dis_finalviz = True
-    # open3dis_final_path = '../exp/version_check/final_result_hier_agglo/' + scene_id + '.pth'
+    ## 8 visualize Open3DIS results
+    check_open3dis_finalviz = False
+    open3dis_final_path = '../exp/version_check/final_result_hier_agglo/' + scene_id + '.pth'
 
     pyviz3d_dir = '../viz' # visualization directory
 
@@ -717,4 +717,7 @@ if __name__ == "__main__":
         VIZ.singleviz(os.path.join(output_dir,scene_id + '.pth'), specific = True, vocab = False)
     if check_refinedviz:
         VIZ.refinedviz(refined_path, specific = True, vocab = True)
+    if check_open3dis_finalviz:
+        VIZ.singleviz(open3dis_final_path, specific = True, vocab = True)
+
     VIZ.save(pyviz3d_dir)

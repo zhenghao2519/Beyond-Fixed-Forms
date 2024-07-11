@@ -261,16 +261,23 @@ if __name__ == "__main__":
                 # use stage1 mask
                 if all_similarities[s][m] < sim_thres:
                     continue
+
                 final_output["ins"].append(all_matched_stage1_masks[s][m])
+                # use intersection of stage1 and stage2 mask
+                # final_output["ins"].append(
+                #     all_matched_stage1_masks[s][m] & all_matched_stage2_masks[s][m]
+                # )
                 # final_output["conf"].append(stage1_output["conf"][idx])
                 # use corresponding stage2 conf and label
                 final_output["conf"].append(all_stage2_conf[s][m])
                 final_output["final_class"].append(text_prompt)
             else:
-                # use intersection of stage1 and stage2 mask
+                # # use intersection of stage1 and stage2 mask
                 final_output["ins"].append(
                     all_matched_stage1_masks[s][m] & all_matched_stage2_masks[s][m]
                 )
+                # use stage2 mask
+                # final_output["ins"].append(all_matched_stage2_masks[s][m])
                 # # use corresponding stage2 conf
                 final_output["conf"].append(all_stage2_conf[s][m])
                 # average confidence

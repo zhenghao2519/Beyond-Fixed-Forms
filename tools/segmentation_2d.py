@@ -5,7 +5,7 @@ from groundingdino.models import build_model
 from groundingdino.util import box_ops
 from groundingdino.util.slconfig import SLConfig
 from groundingdino.util.utils import clean_state_dict, get_phrases_from_posmap
-from groundingdino.util.inference import annotate, load_image, predict
+from groundingdino.util.inference import annotate, load_image, predict, preprocess_caption
 from torch.utils.data import DataLoader
 
 # segment anything
@@ -451,7 +451,7 @@ if __name__ == "__main__":
     # scenes = sorted([s for s in scenes if s.endswith("_00")])[70:80]
     # scenes = ['scene0435_00']
     stage_1_results_dir = cfg.stage_1_results_dir
-    scenes = sorted([f[:-4] for f in os.listdir(stage_1_results_dir) if f.endswith('00.pth') and not f.endswith('144_00.pth')])
+    scenes = sorted([f[:-4] for f in os.listdir(stage_1_results_dir) if f.endswith('00.pth')])
     # scenes = ['scene0353_00']
     # print("Number of scenes:", len(scenes))
     

@@ -133,16 +133,16 @@ def aggregate(
             "ins": torch.tensor([[]]).to(device=device),  # (Ins, N)
             "conf": torch.tensor([]).to(device=device),  # (Ins, )
             "final_class": [],  # (Ins,)
-        }
+        }, []
     
-    # solve overlapping
-    final_masks = solve_overlapping(aggregated_masks, mask_indeces_to_be_merged)
+    # # solve overlapping
+    # final_masks = solve_overlapping(aggregated_masks, mask_indeces_to_be_merged)
 
     return {
-        "ins": final_masks,  # torch.tensor (Ins, N)
+        "ins": aggregated_masks,  # torch.tensor (Ins, N)
         "conf": aggregated_confidences,  # torch.tensor (Ins, )
         "final_class": aggregated_labels,  # List[str] (Ins,)
-    }
+    }, mask_indeces_to_be_merged
 
 
 def calculate_iou(ins_masks: torch.Tensor) -> torch.Tensor:
@@ -317,8 +317,8 @@ def get_parser():
     return parser
 
 def scene_checkpoint_file(class_name):
-    # return f"projection_2d_to_3d_checkpoint_{class_name}.yaml"
-    return f"checkpoints/projection_2d_to_3d_checkpoint.yaml"
+    return f"checkpoints/projection_2d_to_3d_checkpoint_{class_name}.yaml"
+    # return f"checkpoints/projection_2d_to_3d_checkpoint.yaml"
 
 def read_scene_checkpoint(class_name):
     checkpoint_file = scene_checkpoint_file(class_name)
@@ -363,9 +363,9 @@ if __name__ == "__main__":
     # seg_outputs = ["scene0353_00.pth"]
     for seg_output in tqdm(seg_outputs, desc="Projecting 2d masks to 3d point cloud"):
         scene_id = seg_output[:-4]
-        print("Working on", scene_id)
-        if scene_checkpoint.get(scene_id, False):
-            continue
+        # if scene_checkpoint.get(scene_id, False):
+        #     continue
+        print("Working on", scene_id, "class", text_prompt)
         cam_intr_path = os.path.join(scene_2d_dir, scene_id, "intrinsic", "intrinsic_color.txt")
 
         # intrinsic color
@@ -485,7 +485,7 @@ if __name__ == "__main__":
         )  # (Ins,)
 
         """Aggregating 3d masks"""
-        backprojected_3d_masks = aggregate(
+        backprojected_3d_masks, mask_indeces_to_be_merged = aggregate(
             backprojected_3d_masks,
             iou_threshold=cfg.iou_thres,
             feature_similarity_threshold=cfg.similarity_thres,
@@ -566,14 +566,14 @@ if __name__ == "__main__":
                 viewed_counts += torch.tensor(visibility_mask).to(device=device)
 
             # only calculate non-zero viewed counts
-            print("viewed_counts", viewed_counts.unique())
+            # print("viewed_counts", viewed_counts.unique())
             detected_ratio = masked_counts / (viewed_counts + 1)  # avoid /0
-            print("detected_ratio", detected_ratio.unique())
+            # print("detected_ratio", detected_ratio.unique())
             detected_ratio_thres = cfg.detected_ratio_threshold
             detected_ratio_thres_value = detected_ratio.unique()[
                 round(detected_ratio_thres * detected_ratio.unique().shape[0])
             ]
-            # print("detected_ratio_thres_value", detected_ratio_thres_value)
+            print("detected_ratio_thres_value", detected_ratio_thres_value)
             masked_counts[detected_ratio < detected_ratio_thres_value] = 0
 
         scene_checkpoint[scene_id] = True
@@ -589,6 +589,8 @@ if __name__ == "__main__":
         # apply filtering on backprojected_3d_masks["ins"]
         print("before filtering", backprojected_3d_masks["ins"].shape)
         num_ins_points_before_filtering = backprojected_3d_masks["ins"].sum(dim=1)  # (Ins,)
+        # solve overlapping
+        backprojected_3d_masks["ins"] = solve_overlapping(backprojected_3d_masks["ins"], mask_indeces_to_be_merged)
         backprojected_3d_masks["ins"] &= masked_points.unsqueeze(0)  # (Ins, N)
         num_ins_points_after_filtering = backprojected_3d_masks["ins"].sum(dim=1)  # (Ins,)
         # print("num_ins_points_before_filtering", num_ins_points_before_filtering)

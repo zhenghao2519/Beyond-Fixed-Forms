@@ -100,9 +100,15 @@ if __name__ == "__main__":
     cfg = Munch.fromDict(yaml.safe_load(open(config_path, "r").read()))
     checkpoint = read_checkpoint()
 
-    classes_to_process = HEAD_CATS_SCANNET_200[:10] + COMMON_CATS_SCANNET_200[:10] + TAIL_CATS_SCANNET_200[:10]
+    classes_to_process = HEAD_CATS_SCANNET_200[:30] + COMMON_CATS_SCANNET_200[:30] + TAIL_CATS_SCANNET_200[:30]
+    nan_classes = ["bicycle", "mouse", "storage container", "light switch", "candle",  "guitar case", "purse", "alarm clock", "music stand", "cd case", "structure","storage organizer", "fire alarm", "power strip","luggage"   ]
     # classes_to_process = ["clothes"]
     for class_name in tqdm(classes_to_process, desc="Processing classes"):
+        
+        if class_name in nan_classes:
+            print("SKIP nan class")
+            continue
+        
         checkpoint.setdefault(class_name, {})
         print(colored(f"--------------Starting process for class: {class_name}--------------", "yellow", attrs=["bold"]))
         if process_class(class_name, config_path, checkpoint):
