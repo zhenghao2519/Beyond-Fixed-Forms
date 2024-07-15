@@ -42,7 +42,7 @@ sam_checkpoint: "/home/jie_zhenghao/Beyond-Fixed-Forms/pretrained/sam_vit_h_4b89
 sam_url: "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth"
 
 # Aggregate
-iou_thres: 0.3
+iou_thres: 0.2
 similarity_thres: 0.75
 min_aggragated_masks: 2
 # Filtering
@@ -50,17 +50,19 @@ if_occurance_threshold: False
 occurance_threshold: 0.3 # points with occurance under lowest `occurance_threshold`% will be filtered out
 
 if_detected_ratio_threshold: True
-detected_ratio_threshold: 0.15 # 0.1/ 0.2 /0.3/  0.4 is a good value # points with detected ratio under lowest `detected_ratio_threshold`% will be filtered out
+detected_ratio_threshold: 0.38 #0.38 # 0.1/ 0.2 /0.3/  0.4 # points with detected ratio under lowest `detected_ratio_threshold`% will be filtered out
 
-remove_filtered_masks: 0.5 # remove masks containing less than `remove_filtered_masks` percent points after filtering
-remove_small_masks: 50 # 3d masks with less than `remove_small_masks` points will be removed
+remove_filtered_masks: 0.4 # remove masks containing less than `remove_filtered_masks` percent points after filtering
+remove_small_masks: 5 # 3d masks with less than `remove_small_masks` points will be removed
 
 # Final Refinement of stage 1/2
 stage_1_results_dir: "exp_stage_1/Result_OpenVocab_ISBNet-GSAM/final_result_hier_agglo/"
 
+stage1_iou_thres: 0.1 # cause no NMS in stage 1 for Open3DIS, we consider masks with iou > `stage1_iou_thres` as the same object
+
 refinment_sim_thres: 0.65 #0.71
-refinment_sim_percentile: 0 # 0.75
-refiment_iou_thres: 0.5
+refinment_sim_percentile: 0.2 # 0.75
+refiment_iou_thres: 0.45
 
 final_output_dir: "output/final_output"
 

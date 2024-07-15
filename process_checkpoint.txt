@@ -1,3 +1,13 @@
+alarm clock:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
+backpack:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
 bag:
   evaluation: true
   projection_2d_to_3d: true
@@ -58,7 +68,21 @@ bottle:
   projection_2d_to_3d: true
   refinement: true
   segmentation_2d: true
+bowl:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+broom:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
 bucket:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
+candle:
   evaluation: true
   projection_2d_to_3d: true
   refinement: true
@@ -98,7 +122,19 @@ container:
   projection_2d_to_3d: true
   refinement: true
   segmentation_2d: true
+copier:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
 couch:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
+counter:
+  segmentation_2d: true
+crate:
   evaluation: true
   projection_2d_to_3d: true
   refinement: true
@@ -133,6 +169,11 @@ dresser:
   projection_2d_to_3d: true
   refinement: true
   segmentation_2d: true
+dustpan:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
 end table:
   evaluation: true
   projection_2d_to_3d: true
@@ -142,6 +183,8 @@ fan:
   evaluation: true
   projection_2d_to_3d: true
   refinement: true
+  segmentation_2d: true
+file cabinet:
   segmentation_2d: true
 fire extinguisher:
   evaluation: true
@@ -153,7 +196,27 @@ guitar:
   projection_2d_to_3d: true
   refinement: true
   segmentation_2d: true
+guitar case:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
+hair dryer:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
+handicap bar:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
 hat:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
+headphones:
   evaluation: true
   projection_2d_to_3d: true
   refinement: true
@@ -188,7 +251,17 @@ laptop:
   projection_2d_to_3d: true
   refinement: true
   segmentation_2d: true
+laundry basket:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
 light:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
+light switch:
   evaluation: true
   projection_2d_to_3d: true
   refinement: true
@@ -208,6 +281,15 @@ monitor:
   projection_2d_to_3d: true
   refinement: true
   segmentation_2d: true
+mouse:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
+music stand:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
 nightstand:
   evaluation: true
   projection_2d_to_3d: true
@@ -234,6 +316,12 @@ oven:
   refinement: true
   segmentation_2d: true
 paper:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
+paper bag: {}
+paper cutter:
   evaluation: true
   projection_2d_to_3d: true
   refinement: true
@@ -268,12 +356,34 @@ pillow:
   projection_2d_to_3d: true
   refinement: true
   segmentation_2d: true
+pipe:
+  segmentation_2d: true
 plate:
   evaluation: true
   projection_2d_to_3d: true
   refinement: true
   segmentation_2d: true
+plunger:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
+power outlet:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
 printer:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
+projector:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
+purse:
   evaluation: true
   projection_2d_to_3d: true
   refinement: true
@@ -293,6 +403,15 @@ recycling bin:
   projection_2d_to_3d: true
   refinement: true
   segmentation_2d: true
+refrigerator:
+  segmentation_2d: true
+scale:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
+seat:
+  segmentation_2d: true
 shoe:
   evaluation: true
   projection_2d_to_3d: true
@@ -309,6 +428,21 @@ shower curtain:
   refinement: true
   segmentation_2d: true
 shower curtain rod:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
+shower floor:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
+shower wall:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
+sign:
   evaluation: true
   projection_2d_to_3d: true
   refinement: true
@@ -343,7 +477,19 @@ stand:
   projection_2d_to_3d: true
   refinement: true
   segmentation_2d: true
+stool:
+  segmentation_2d: true
+storage container:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
 stove:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
+stuffed animal:
   evaluation: true
   projection_2d_to_3d: true
   refinement: true
@@ -353,12 +499,32 @@ suitcase:
   projection_2d_to_3d: true
   refinement: true
   segmentation_2d: true
+table:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
 telephone:
   evaluation: true
   projection_2d_to_3d: true
   refinement: true
   segmentation_2d: true
+tissue box:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
 toaster:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
+toaster oven:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
+toilet:
   evaluation: true
   projection_2d_to_3d: true
   refinement: true
@@ -378,6 +544,16 @@ toilet paper holder:
   projection_2d_to_3d: true
   refinement: true
   segmentation_2d: true
+toilet seat cover dispenser:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
+tray:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
 tv:
   evaluation: true
   projection_2d_to_3d: true
@@ -388,8 +564,25 @@ tv stand:
   projection_2d_to_3d: true
   refinement: true
   segmentation_2d: true
+vent:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
 washing machine:
   evaluation: true
   projection_2d_to_3d: true
   refinement: true
+  segmentation_2d: true
+water bottle:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
+water pitcher:
+  evaluation: true
+  projection_2d_to_3d: true
+  refinement: true
+  segmentation_2d: true
+window:
   segmentation_2d: true

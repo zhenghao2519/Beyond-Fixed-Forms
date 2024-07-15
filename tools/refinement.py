@@ -15,6 +15,8 @@ from tqdm import tqdm
 
 import clip
 
+# from evaluation.dataset.scannet200 import INSTANCE_CAT_SCANNET_200
+
 
 """
 1. Process Stage 1 masks
@@ -136,6 +138,10 @@ if __name__ == "__main__":
     cfg = Munch.fromDict(yaml.safe_load(open(args.config, "r").read()))
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     text_prompt = args.cls
+    # replace space with underscore
+    text_prompt_underscore = text_prompt.replace(" ", "_")
+    print("Processing class:", text_prompt_underscore)
+    
     scene_checkpoint = read_scene_checkpoint(text_prompt)
     
     clip_model, _ = clip.load("ViT-L/14", device=device)
@@ -155,6 +161,7 @@ if __name__ == "__main__":
     all_matched_stage1_masks = [] # shape (num_scene, num_masks_in_scene)
     all_matched_stage2_masks = [] # shape (num_scene, num_masks_in_scene)
     all_stage2_conf = [] # shape (num_scene, num_masks_in_scene)
+    all_other_stage1_masks = [] # shape (num_scene, num_masks_in_scene)
     
     for stage2_output in tqdm(stage2_outputs, desc="Select thresholds for refinement"):
         scene_id = stage2_output.replace(".pth", "")
@@ -174,16 +181,6 @@ if __name__ == "__main__":
 
         stage1_output = torch.load(stage1_path, map_location="cpu")
         stage2_output = torch.load(stage2_path, map_location="cpu")	
-        
-        """If stage 2 is empty, save empty output and continue"""
-        if len(stage2_output["conf"]) == 0:
-            print("Empty stage 2 mask")
-            all_ious.append([])
-            all_similarities.append([])
-            all_matched_stage1_masks.append([])
-            all_matched_stage2_masks.append([])
-            all_stage2_conf.append([])
-            continue
 
         # Process stage 1 masks
         instance = stage1_output["ins"]
@@ -195,6 +192,18 @@ if __name__ == "__main__":
         class_indices = stage1_output["final_class"]
         stage1_output["final_class"] = [idx_to_label(idx) for idx in class_indices]
 
+        """If stage 2 is empty, save empty output and continue"""
+        if len(stage2_output["conf"]) == 0:
+            print("Empty stage 2 mask")
+            all_ious.append([])
+            all_similarities.append([])
+            all_matched_stage1_masks.append([])
+            all_matched_stage2_masks.append([])
+            all_stage2_conf.append([])
+            other_stage1_masks = [i for i, label in enumerate(stage1_output["final_class"]) if label == text_prompt_underscore]
+            all_other_stage1_masks.append(stage1_output["ins"][other_stage1_masks])
+            continue
+        
         # compute iou between stage1 and stage2 masks
         iou_matrix = calculate_iou_between_stages(
             stage1_output["ins"], stage2_output["ins"]
@@ -203,6 +212,87 @@ if __name__ == "__main__":
             iou_matrix, dim=1
         )  # for each stage2 mask, find the best matched stage1 mask
 
+        """ merge stage2 masks with the same stage1 mask matched"""
+        # uniques, counts = torch.unique(max_match, return_counts=True)
+        matched_stage1_iou_matrix = calculate_iou_between_stages(
+            stage1_output["ins"][max_match], stage1_output["ins"][max_match]
+        ) # shape=(m, m), iou between matched stage1 masks
+        # set diagonal to 0
+        matched_stage1_iou_matrix[range(len(max_match)), range(len(max_match))] = 0
+        # print("DEBUG matched_stage1_iou_matrix", matched_stage1_iou_matrix)
+        # find matched stage1 masks with iou > cfg.stage1_iou_thres
+        matched_stage1_iou_matrix = (matched_stage1_iou_matrix > cfg.stage1_iou_thres).to(int)
+        # print("DEBUG matched_stage1_iou_matrix", matched_stage1_iou_matrix)
+        # merge stage1 masks with iou > cfg.stage1_iou_thres
+
+
+        
+        best_match_after_iou_check = []
+        remove_idx = torch.ones(len(matched_stage1_iou_matrix), dtype=torch.int) * -1
+        for i in range(len(matched_stage1_iou_matrix)):
+            # print("DEBUG i", i)
+            if remove_idx[i] != -1:
+                idx = remove_idx[i]
+                # print("DEBUG idx", idx)
+                best_match_after_iou_check.append(max_match[idx]) # add the same stage1 mask
+                continue
+
+            best_match_after_iou_check.append(max_match[i])
+
+            if matched_stage1_iou_matrix[i].sum() > 0:
+               for j in range(len(matched_stage1_iou_matrix[i])):
+                #    print(matched_stage1_iou_matrix[i])
+                   if matched_stage1_iou_matrix[i][j] == 1:
+                    #    print("DEbug ih", i, j)
+                       remove_idx[j] = i
+                       stage1_output["ins"][max_match[i]] = stage1_output["ins"][max_match[i]] | stage1_output["ins"][max_match[j]]
+                    #    print("DEBUG remove_idx", remove_idx)
+
+        print("DEBUG best_match_after_iou_check", best_match_after_iou_check)
+            # match = torch.nonzero(matched_stage1_iou_matrix[i]).squeeze(1)
+            # if len(match) > 0:
+            #     best_match_after_iou_check.append(match[0])
+            #     remove_idx.extend(match[1:])
+            # else:
+            #     best_match_after_iou_check.append(i)
+        best_match_after_iou_check = torch.tensor(best_match_after_iou_check)
+        uniques, counts = torch.unique(best_match_after_iou_check, return_counts=True)
+
+        
+        print("DEBUG uniques", uniques, counts)
+        for i, count in zip(uniques, counts):
+            print(f"Matched {count} times with {i}")
+            if count > 1:
+                print("Merge stage2 masks")
+                masks = stage2_output["ins"][best_match_after_iou_check == i]
+                # print("DEBUG masks", masks.shape, i, [best_match_after_iou_check == i])
+                merged_mask = masks.any(dim=0)
+                confs = stage2_output["conf"][best_match_after_iou_check == i]
+                merged_conf = confs.mean()
+                # remove other merged masks
+                stage2_output["ins"] = torch.cat(
+                    [stage2_output["ins"][best_match_after_iou_check != i], merged_mask.unsqueeze(0)]
+                ) # shape=(m, x)
+                stage2_output["conf"] = torch.cat(
+                    [stage2_output["conf"][best_match_after_iou_check != i], merged_conf.unsqueeze(0)]
+                )
+                best_match_after_iou_check = torch.cat(
+                    [best_match_after_iou_check[best_match_after_iou_check != i], i.unsqueeze(0)]
+                )
+
+
+        # compute iou between stage1 and stage2 masks
+        iou_matrix = calculate_iou_between_stages(
+            stage1_output["ins"], stage2_output["ins"]
+        )
+        max_match = torch.argmax(
+            iou_matrix, dim=1
+        )  # for each stage2 mask, find the best matched stage1 mask. shape=(m,)
+        
+        """get other stage 1 masks indices with current label"""
+        other_stage1_masks = [i for i, label in enumerate(stage1_output["final_class"]) if label == text_prompt_underscore and i not in max_match]
+        all_other_stage1_masks.append(stage1_output["ins"][other_stage1_masks])
+     
         # compute similarity between stage1 and stage2 labels
         matched_labels = [stage1_output["final_class"][idx] for idx in max_match]
         text2 = text_prompt
@@ -220,6 +310,7 @@ if __name__ == "__main__":
         all_matched_stage1_masks.append(stage1_output["ins"][max_match])
         all_matched_stage2_masks.append(stage2_output["ins"])
         all_stage2_conf.append(stage2_output["conf"])  
+        
     
     
     """"determine thresholds"""
@@ -231,10 +322,10 @@ if __name__ == "__main__":
     sim_unique = sorted(set(flattern_sim))
     print("Unique similarities:", sim_unique)
     sim_thres = sim_unique[int(len(sim_unique) * sim_percentile)]
-    print("Final thresholds:", iou_thres, sim_thres)
+    # print("Final thresholds:", iou_thres, sim_thres)
     
     
-    
+
     
     for s, stage2_output in tqdm(enumerate(stage2_outputs), desc="Refining stage1 output with stage2 outcomes"):
         scene_id = stage2_output.replace(".pth", "")
@@ -246,18 +337,30 @@ if __name__ == "__main__":
             "final_class": [],  # (Ins,) List[str]
         }
         
+        for mask in all_other_stage1_masks[s]:
+            final_output["ins"].append(mask)
+            final_output["conf"].append(torch.tensor(0.5))
+            final_output["final_class"].append(text_prompt)
+            
+        print("DEBUG all ious", all_ious[s])
+        
         ious = all_ious[s]
         if len(ious) == 0:
             # print("Empty stage 2 mask")
+            if len(final_output["ins"]) != 0: # still have other stage1 masks
+                final_output["ins"] = torch.stack(final_output["ins"]).to(bool)
+                final_output["conf"] = torch.stack(final_output["conf"])
             os.makedirs(os.path.join(cfg.final_output_dir, text_prompt), exist_ok=True)
             torch.save(
-                stage2_output,
+                final_output,
                 os.path.join(cfg.final_output_dir, text_prompt, f"{scene_id}.pth"),
             )
+            continue
         
         for m, iou in enumerate(ious) :  # i in stage2, idx in stage1
             # i in stage2, idx in stage1
             if iou > iou_thres:
+                print("USE STAGE 1 MASK", iou)
                 # use stage1 mask
                 if all_similarities[s][m] < sim_thres:
                     continue
@@ -272,12 +375,13 @@ if __name__ == "__main__":
                 final_output["conf"].append(all_stage2_conf[s][m])
                 final_output["final_class"].append(text_prompt)
             else:
+                print("USE STAGE 2 MASK", iou)
                 # # use intersection of stage1 and stage2 mask
-                final_output["ins"].append(
-                    all_matched_stage1_masks[s][m] & all_matched_stage2_masks[s][m]
-                )
+                # final_output["ins"].append(
+                #     all_matched_stage1_masks[s][m] & all_matched_stage2_masks[s][m]
+                # )
                 # use stage2 mask
-                # final_output["ins"].append(all_matched_stage2_masks[s][m])
+                final_output["ins"].append(all_matched_stage2_masks[s][m])
                 # # use corresponding stage2 conf
                 final_output["conf"].append(all_stage2_conf[s][m])
                 # average confidence
@@ -287,6 +391,12 @@ if __name__ == "__main__":
                 # use corresponding stage2 label
                 final_output["final_class"].append(text_prompt)
 
+        # add other stage1 masks with the same label
+        # if all_other_stage1_masks[s] != []:
+        #     print("DEBUG all_other_stage1_masks", all_other_stage1_masks[s].sum(), all_other_stage1_masks[s].shape, final_output["ins"][-1].shape)
+        
+            
+            
         # transform to torch.Tensor
         
         if len(final_output["ins"]) == 0:

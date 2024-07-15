@@ -16,7 +16,7 @@ from munch import Munch
 from tqdm import tqdm
 from typing import List, Dict, Tuple 
 import sys
-
+import time
 sys.path.append("/medar_smart/temp/Beyond-Fixed-Forms/tools")
 # from segmentation_2d import inference_grounded_sam
 from utils.rle_encode_decode import encode_2d_masks, decode_2d_masks
@@ -27,6 +27,7 @@ device = torch.device(
     else "mps" if torch.backends.mps.is_available() else "cpu"
 )
 
+import math
 
 """
 1. Project 2d masks to 3d point cloud
@@ -513,7 +514,7 @@ if __name__ == "__main__":
             # print("occurance count", masked_counts.unique())
             occurance_thres = cfg.occurance_threshold
             occurance_thres_value = occurance_counts[
-                round(occurance_thres * occurance_counts.shape[0])
+                math.floor(occurance_thres * occurance_counts.shape[0])
             ]
             # print("occurance thres value", occurance_thres_value)
 
@@ -571,7 +572,7 @@ if __name__ == "__main__":
             # print("detected_ratio", detected_ratio.unique())
             detected_ratio_thres = cfg.detected_ratio_threshold
             detected_ratio_thres_value = detected_ratio.unique()[
-                round(detected_ratio_thres * detected_ratio.unique().shape[0])
+                math.floor(detected_ratio_thres * detected_ratio.unique().shape[0])
             ]
             print("detected_ratio_thres_value", detected_ratio_thres_value)
             masked_counts[detected_ratio < detected_ratio_thres_value] = 0
@@ -624,6 +625,7 @@ if __name__ == "__main__":
         print("after filtering", backprojected_3d_masks["ins"].shape)
         print("num_ins_points_after_filtering", backprojected_3d_masks["ins"].sum(dim=1))
 
+        start_time = time.time()
         # save the backprojected_3d_masks
         os.makedirs(os.path.join(cfg.mask_3d_dir, text_prompt), exist_ok=True)
         torch.save(

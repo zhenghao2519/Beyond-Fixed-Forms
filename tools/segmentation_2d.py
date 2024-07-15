@@ -465,7 +465,7 @@ if __name__ == "__main__":
         # if os.path.exists(os.path.join(mask_2d_dir, text_prompt, f"{scene_id}.pth")):
         #     print(f"Segmentation 2D for {scene_id} already done, skipping.")
         #     # continue
-        print(f"Working on {scene_id}")
+        print(f"Working on {scene_id}", "with text prompt:", text_prompt)
         image_dir = os.path.join(scene_2d_dir, scene_id, "color")
         image_files = [f for f in os.listdir(image_dir) if f.endswith(".jpg")]
         image_files.sort(

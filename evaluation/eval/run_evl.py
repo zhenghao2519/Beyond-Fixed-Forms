@@ -64,34 +64,34 @@ def process_class(class_name, config_path, checkpoint):
         else:
             return False
 
-    if checkpoint.get(class_name, {}).get("projection_2d_to_3d", False):
-        print(colored(f"Projections 2D to 3D for {class_name} already done, skipping.", "yellow"))
-    else:
-        if run_command(["python", "tools/projection_2d_to_3d.py", "--config", config_path, "--cls", class_name]):
-            checkpoint[class_name]["projection_2d_to_3d"] = True
-            write_checkpoint(checkpoint)
-            print(colored(f"Projection 2D to 3D for {class_name} done.", "green"))
-        else:
-            return False
+    # if checkpoint.get(class_name, {}).get("projection_2d_to_3d", False):
+    #     print(colored(f"Projections 2D to 3D for {class_name} already done, skipping.", "yellow"))
+    # else:
+    #     if run_command(["python", "tools/projection_2d_to_3d.py", "--config", config_path, "--cls", class_name]):
+    #         checkpoint[class_name]["projection_2d_to_3d"] = True
+    #         write_checkpoint(checkpoint)
+    #         print(colored(f"Projection 2D to 3D for {class_name} done.", "green"))
+    #     else:
+    #         return False
 
-    if checkpoint.get(class_name, {}).get("refinement", False):
-        print(colored(f"Refinement for {class_name} already done, skipping.", "yellow"))
-    else:
-        if run_command(["python", "tools/refinement.py", "--config", config_path, "--cls", class_name]):
-            checkpoint[class_name]["refinement"] = True
-            write_checkpoint(checkpoint)
-            print(colored(f"Refinements for {class_name} done.", "green"))
-        else:
-            return False
+    # if checkpoint.get(class_name, {}).get("refinement", False):
+    #     print(colored(f"Refinement for {class_name} already done, skipping.", "yellow"))
+    # else:
+    #     if run_command(["python", "tools/refinement.py", "--config", config_path, "--cls", class_name]):
+    #         checkpoint[class_name]["refinement"] = True
+    #         write_checkpoint(checkpoint)
+    #         print(colored(f"Refinements for {class_name} done.", "green"))
+    #     else:
+    #         return False
 
-    if checkpoint.get(class_name, {}).get("evaluation", False):
-        print(colored(f"Evaluation for {class_name} already done, skipping.", "yellow"))
-    else:
-        if run_command(["python", "evaluation/eval/eval_scannet200.py", "--cls", class_name]):
-            checkpoint[class_name]["evaluation"] = True
-            write_checkpoint(checkpoint)
-        else:
-            return False
+    # if checkpoint.get(class_name, {}).get("evaluation", False):
+    #     print(colored(f"Evaluation for {class_name} already done, skipping.", "yellow"))
+    # else:
+    #     if run_command(["python", "evaluation/eval/eval_scannet200.py", "--cls", class_name]):
+    #         checkpoint[class_name]["evaluation"] = True
+    #         write_checkpoint(checkpoint)
+    #     else:
+    #         return False
 
     return True
 
@@ -100,8 +100,9 @@ if __name__ == "__main__":
     cfg = Munch.fromDict(yaml.safe_load(open(config_path, "r").read()))
     checkpoint = read_checkpoint()
 
-    classes_to_process = HEAD_CATS_SCANNET_200[:30] + COMMON_CATS_SCANNET_200[:30] + TAIL_CATS_SCANNET_200[:30]
-    nan_classes = ["bicycle", "mouse", "storage container", "light switch", "candle",  "guitar case", "purse", "alarm clock", "music stand", "cd case", "structure","storage organizer", "fire alarm", "power strip","luggage"   ]
+    classes_to_process = HEAD_CATS_SCANNET_200[:40] + COMMON_CATS_SCANNET_200[:40] + TAIL_CATS_SCANNET_200[:40]
+    # nan_classes = ["clothes dryer", "pipe", "column", "bulletin board", "potted plant","coat rack", "folded chair", "calendar", "poster" ,"soap dispenser", "keyboard piano", "shower head", "guitar", "fire extinguisher", "tissue box", "scale", "soap dish", "tube", "plunger", "paper cutter", "storage container", "candle",  "music stand"   ]
+    nan_classes = [  "bicycle", "machine",  "structure", "storage organizer", "potted plant", "cd case", "coat rack", "fire alarm", "power strip", "luggage"  ]
     # classes_to_process = ["clothes"]
     for class_name in tqdm(classes_to_process, desc="Processing classes"):
         

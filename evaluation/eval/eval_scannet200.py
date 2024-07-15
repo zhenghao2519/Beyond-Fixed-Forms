@@ -101,6 +101,8 @@ if __name__ == "__main__":
         scene_path = os.path.join(data_path, scene)
         pred_mask = torch.load(scene_path, map_location="cpu")
 
+        # print("DEBUG pred_mask", scene_path, pred_mask)
+
         masks, category, score = pred_mask["ins"], pred_mask["final_class"], pred_mask["conf"]
 
         masks = torch.tensor(masks)

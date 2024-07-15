@@ -560,7 +560,7 @@ class VisualizationScannet200:
             label = dic['final_class']
         pallete =  generate_palette(int(2e3 + 1))
         tt_col = self.color.copy()
-        limit = 50
+        limit = 20
         for i in range(0, instance.shape[0]):
             # print('DEBUG   '+str(instance.shape) + str(len(pallete)) + str(len(tt_col)))
             tt_col[instance[i] == 1] = pallete[i]
@@ -643,6 +643,8 @@ class VisualizationScannet200:
 def get_parser():
     parser = argparse.ArgumentParser(description="Configuration Open3DIS")
     parser.add_argument("--config",type=str,required = True,help="Config")
+    parser.add_argument("--cls",type=str,required = False,help="Class")
+    parser.add_argument("--scene",type=str,required = False,help="Scene")
     return parser
 
 
@@ -662,15 +664,17 @@ if __name__ == "__main__":
     cfg = Munch.fromDict(yaml.safe_load(open(args.config, "r").read()))
     
     # Scene ID to visualize
-    scene_id = 'scene0435_00'
-    base_prompt = 'clothes'
+    # scene_id = 'scene0011_00'
+    scene_id = args.scene
+    # base_prompt = 'table'
+    base_prompt = args.cls
 
     ##### The format follows the dataset tree
     ## 1
     check_superpointviz = False
     spp_path = './data/Scannet200/Scannet200_3D/val/superpoints/' + scene_id + '.pth'
     ## 2
-    check_gtviz = False
+    check_gtviz = True
     gt_path = './data/Scannet200/Scannet200_3D/groundtruth/' + scene_id + '.pth'
     ## 3
     check_3dviz = False
@@ -678,20 +682,16 @@ if __name__ == "__main__":
     ## 4
     check_2dviz = False
     mask2d_path = '../exp/version_sam/hier_agglo/' + scene_id + '.pth'
-    ## 5 Visualize final mask of stage 1
-    check_finalviz = False
+    ## 5 Visualize final mask of stage 1 (Open3DIS results)
+    check_finalviz = True
     agnostic_path = os.path.join(cfg.stage_1_results_dir, scene_id + '.pth')
     ## 6 Visualize final mask of stage 2 in each class
     check_singleviz = True
     output_dir = os.path.join(cfg.mask_3d_dir, base_prompt)
     ## 7 Visualize final refined masks
-    check_refinedviz = False
+    check_refinedviz = True
     refined_path = os.path.join(cfg.final_output_dir, base_prompt, scene_id + '.pth')
     # agnostic_path = './data/Scannet200/Scannet200_3D/val/single_object_test/' + scene_id + '.pth'
-
-    ## 8 visualize Open3DIS results
-    check_open3dis_finalviz = False
-    open3dis_final_path = '../exp/version_check/final_result_hier_agglo/' + scene_id + '.pth'
 
     pyviz3d_dir = '../viz' # visualization directory
 
@@ -712,12 +712,11 @@ if __name__ == "__main__":
     if check_2dviz:
         VIZ.vizmask2d(mask2d_path, specific = False)
     if check_finalviz:
-        VIZ.finalviz(agnostic_path, specific = True, vocab = True)
+        VIZ.finalviz(agnostic_path, specific = False, vocab = False)
     if check_singleviz:
         VIZ.singleviz(os.path.join(output_dir,scene_id + '.pth'), specific = True, vocab = False)
     if check_refinedviz:
         VIZ.refinedviz(refined_path, specific = True, vocab = True)
-    if check_open3dis_finalviz:
-        VIZ.singleviz(open3dis_final_path, specific = True, vocab = True)
+
 
     VIZ.save(pyviz3d_dir)
