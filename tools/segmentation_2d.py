@@ -5,7 +5,7 @@ from groundingdino.models import build_model
 from groundingdino.util import box_ops
 from groundingdino.util.slconfig import SLConfig
 from groundingdino.util.utils import clean_state_dict, get_phrases_from_posmap
-from groundingdino.util.inference import annotate, load_image, predict
+from groundingdino.util.inference import annotate, load_image, predict, preprocess_caption
 from torch.utils.data import DataLoader
 
 # segment anything
@@ -13,7 +13,7 @@ from segment_anything import build_sam, SamPredictor
 
 # tools
 import descriptor_generator
-from predict_extended import predict_extended
+# from predict_extended import predict_extended
 
 # other imports
 from torch.nn import functional as F
@@ -37,6 +37,8 @@ try:
     BICUBIC = InterpolationMode.BICUBIC
 except ImportError:
     BICUBIC = Image.BICUBIC
+
+from utils.rle_encode_decode import encode_2d_masks, decode_2d_masks
 
 # Device
 device = torch.device(
@@ -97,7 +99,7 @@ def load_grounded_sam():
     print(colored("GroundingDINO & SAM loaded", "yellow", attrs=["bold"]))
     return groundingdino_model, sam_predictor
 
-def load_clip_model(model_size='ViT-B/32'):
+def load_clip_model(model_size='ViT-L/14'):
     model, _ = clip.load(model_size, device=device, jit=False)
     model.eval()
     model.requires_grad_(False)
@@ -108,6 +110,7 @@ def load_clip_model(model_size='ViT-B/32'):
 def detect(
     image_source,
     image,
+    capt_feature_ensembled,
     text_prompt,
     model,
     clip_model,
@@ -126,16 +129,17 @@ def detect(
         text_threshold=text_threshold,
         device=device,
     )
-    # 
-    # boxes, logits, phrases = predict_extended(
-    #     model=model,
-    #     image=image,
-    #     base_prompt=text_prompt,
-    #     box_threshold=box_threshold,
-    #     text_threshold=text_threshold,
-    #     device=device,
-    #     prompt_extender = "toy",
-    # )
+    # remove boxes with labels different from the base prompt
+    if len(phrases) != 0:
+        # print(colored(f"Detected phrases: {phrases}", "green", attrs=["bold"]))
+        # print(text_prompt)
+        indices = [i for i, phrase in enumerate(phrases) if text_prompt in phrase]
+        # print("box_indices", indices)
+        boxes = boxes[indices]
+        logits = logits[indices]
+        phrases = [phrases[i] for i in indices]
+        # print("after filtering", phrases)
+        
 
     if filter_with_clip_feature:
         if clip_size is None:
@@ -147,7 +151,6 @@ def detect(
         else:
             
             # print(colored(f"Modle {clip_size} loaded", "yellow", attrs=["bold"]))
-            capt_feature_ensembled = compute_avg_description_encodings(text_prompt, clip_model, mode='waffle')
             # print(colored(f"Caption feature ensembled, shape: {capt_feature_ensembled.shape}", "green", attrs=["bold"]))
             boxes, logits, phrases = bbox_filter(image, boxes, phrases, capt_feature_ensembled, clip_threshold=similarity_threshold, clip_model=clip_model)
     
@@ -233,17 +236,29 @@ def inference_grounded_sam(
 
     results = []
     num_img_with_boxes = 0
+    
+    if filter_with_clip_feature:
+        capt_feature_ensembled = compute_avg_description_encodings(text_prompt, clip_model, mode='waffle')
+                    
     for i, image_path in enumerate(
         tqdm(image_paths, desc="Processing images", leave=False)
     ):
         frame_id = image_path.split("/")[-1]  # get frame id from image path
-        # print(frame_id)
         image_source, image = load_image(image_path)
+        
+        # reshape image_source to cfg.witdh_2d, cfg.height_2d
+        if image_source.size != (cfg.width_2d, cfg.height_2d):
+            # convert to PIL image
+            image_source = Image.fromarray(image_source)
+            image_source = image_source.resize((cfg.width_2d, cfg.height_2d))
+            image_source = np.array(image_source)
+        
         if image_source is None or image is None:  # skip the image if not loaded
             continue
         annotated_frame, detected_boxes, confidences, labels = detect(
             image_source,
             image,
+            capt_feature_ensembled,
             text_prompt=base_prompt,
             model=groundingdino_model.to(device),
             box_threshold=dino_box_threshold,
@@ -376,7 +391,7 @@ def bbox_filter(image, boxes, phrases, capt_feature_ensembled, clip_threshold=0.
 
     # Compute similarity score
     box_similarities = box_embeddings @ capt_feature_ensembled.T
-    print(colored(f"box_similarities: {box_similarities}", "green", attrs=["bold"]))
+    # print(colored(f"box_similarities: {box_similarities}", "green", attrs=["bold"]))
 
     # Filter boxes
     mask = (box_similarities >= clip_threshold).squeeze(1)
@@ -390,8 +405,24 @@ def bbox_filter(image, boxes, phrases, capt_feature_ensembled, clip_threshold=0.
 def get_parser():
     parser = argparse.ArgumentParser(description="Configuration Beyond-Fixed-Forms")
     parser.add_argument("--config", type=str, required=True, help="Config, specify the path to config.yaml file")
+    parser.add_argument("--cls", type=str, required=True, help="Specific class to evaluate")
     return parser
 
+def scene_checkpoint_file(class_name):
+    # return f"segmentation_2d_checkpoint_{class_name}.yaml"
+    return f"./checkpoints/segmentation_2d_checkpoint_{class_name}.yaml"
+
+def read_scene_checkpoint(class_name):
+    checkpoint_file = scene_checkpoint_file(class_name)
+    if os.path.exists(checkpoint_file):
+        with open(checkpoint_file, 'r') as file:
+            return yaml.safe_load(file)
+    return {}
+
+def write_scene_checkpoint(class_name, checkpoint):
+    checkpoint_file = scene_checkpoint_file(class_name)
+    with open(checkpoint_file, 'w') as file:
+        yaml.safe_dump(checkpoint, file)
 
 if __name__ == "__main__":
 
@@ -410,32 +441,42 @@ if __name__ == "__main__":
     filter_with_clip_feature = cfg.filter_with_CLIP_feature
     clip_size=cfg.CLIP_model_size
     similarity_threshold=cfg.similarity_threshold
-    text_prompt = cfg.base_prompt
+    # text_prompt = cfg.base_prompt
+    text_prompt = args.cls
+    scene_checkpoint = read_scene_checkpoint(text_prompt)
+
     mask_2d_dir = cfg.mask_2d_dir # 2d output path
     
     scene_2d_dir = cfg.scene_2d_dir
-    # scenes = ['scene0011_00', 'scene0011_01', 'scene0015_00', 'scene0019_00', 'scene0019_01', 'scene0025_00', 'scene0025_01', 'scene0025_02', 'scene0030_00', 'scene0030_01', 'scene0030_02', 'scene0046_00', 'scene0046_01', 'scene0046_02', 'scene0050_00', 'scene0050_01', 'scene0050_02', 'scene0063_00', 'scene0064_00', 'scene0064_01', 'scene0077_00', 'scene0077_01', 'scene0081_00', 'scene0081_01', 'scene0081_02', 'scene0084_00', 'scene0084_01', 'scene0084_02', 'scene0086_00', 'scene0086_01', 'scene0086_02', 'scene0088_00', 'scene0088_01', 'scene0088_02', 'scene0088_03', 'scene0095_00', 'scene0095_01', 'scene0100_00', 'scene0100_01', 'scene0100_02', 'scene0131_00', 'scene0131_01', 'scene0131_02', 'scene0139_00', 'scene0144_00', 'scene0144_01', 'scene0146_00', 'scene0146_01', 'scene0146_02', 'scene0149_00', 'scene0153_00', 'scene0153_01', 'scene0164_00', 'scene0164_01', 'scene0164_02', 'scene0164_03', 'scene0169_00', 'scene0169_01', 'scene0187_00', 'scene0187_01', 'scene0193_00', 'scene0193_01', 'scene0196_00', 'scene0203_00', 'scene0203_01', 'scene0203_02', 'scene0207_00', 'scene0207_01', 'scene0207_02', 'scene0208_00', 'scene0217_00', 'scene0221_00', 'scene0221_01', 'scene0222_00', 'scene0222_01', 'scene0231_00', 'scene0231_01', 'scene0231_02', 'scene0246_00', 'scene0249_00', 'scene0251_00', 'scene0256_00', 'scene0256_01', 'scene0256_02', 'scene0257_00', 'scene0277_00', 'scene0277_01', 'scene0277_02', 'scene0278_00', 'scene0278_01', 'scene0300_00', 'scene0300_01', 'scene0304_00', 'scene0307_00', 'scene0307_01', 'scene0307_02', 'scene0314_00', 'scene0316_00', 'scene0328_00', 'scene0329_00', 'scene0329_01', 'scene0329_02', 'scene0334_00', 'scene0334_01', 'scene0334_02', 'scene0338_00', 'scene0338_01', 'scene0338_02', 'scene0342_00', 'scene0343_00', 'scene0351_00', 'scene0351_01', 'scene0353_00', 'scene0353_01', 'scene0353_02', 'scene0354_00', 'scene0355_00', 'scene0355_01', 'scene0356_00', 'scene0356_01', 'scene0356_02', 'scene0357_00', 'scene0357_01', 'scene0377_00', 'scene0377_01', 'scene0377_02', 'scene0378_00', 'scene0378_01', 'scene0378_02', 'scene0382_00', 'scene0382_01', 'scene0389_00', 'scene0406_00', 'scene0406_01', 'scene0406_02', 'scene0412_00', 'scene0412_01', 'scene0414_00', 'scene0423_00', 'scene0423_01', 'scene0423_02', 'scene0426_00', 'scene0426_01', 'scene0426_02', 'scene0426_03', 'scene0427_00', 'scene0430_00', 'scene0430_01', 'scene0432_00', 'scene0432_01', 'scene0435_00', 'scene0435_01', 'scene0435_02', 'scene0435_03', 'scene0441_00', 'scene0458_00', 'scene0458_01', 'scene0461_00', 'scene0462_00', 'scene0474_00', 'scene0474_01', 'scene0474_02', 'scene0474_03', 'scene0474_04', 'scene0474_05', 'scene0488_00', 'scene0488_01', 'scene0490_00', 'scene0494_00', 'scene0496_00', 'scene0500_00', 'scene0500_01', 'scene0518_00', 'scene0527_00', 'scene0535_00', 'scene0549_00', 'scene0549_01', 'scene0550_00', 'scene0552_00', 'scene0552_01', 'scene0553_00', 'scene0553_01', 'scene0553_02', 'scene0558_00', 'scene0558_01', 'scene0558_02', 'scene0559_00', 'scene0559_01', 'scene0559_02', 'scene0565_00', 'scene0568_00', 'scene0568_01', 'scene0568_02', 'scene0574_00', 'scene0574_01', 'scene0574_02', 'scene0575_00', 'scene0575_01', 'scene0575_02', 'scene0578_00', 'scene0578_01', 'scene0578_02', 'scene0580_00', 'scene0580_01', 'scene0583_00', 'scene0583_01', 'scene0583_02', 'scene0591_00', 'scene0591_01', 'scene0591_02', 'scene0593_00', 'scene0593_01', 'scene0595_00', 'scene0598_00', 'scene0598_01', 'scene0598_02', 'scene0599_00', 'scene0599_01', 'scene0599_02', 'scene0606_00', 'scene0606_01', 'scene0606_02', 'scene0607_00', 'scene0607_01', 'scene0608_00', 'scene0608_01', 'scene0608_02', 'scene0609_00', 'scene0609_01', 'scene0609_02', 'scene0609_03', 'scene0616_00', 'scene0616_01', 'scene0618_00', 'scene0621_00', 'scene0629_00', 'scene0629_01', 'scene0629_02', 'scene0633_00', 'scene0633_01', 'scene0643_00', 'scene0644_00', 'scene0645_00', 'scene0645_01', 'scene0645_02', 'scene0647_00', 'scene0647_01', 'scene0648_00', 'scene0648_01', 'scene0651_00', 'scene0651_01', 'scene0651_02', 'scene0652_00', 'scene0653_00', 'scene0653_01', 'scene0655_00', 'scene0655_01', 'scene0655_02', 'scene0658_00', 'scene0660_00', 'scene0663_00', 'scene0663_01', 'scene0663_02', 'scene0664_00', 'scene0664_01', 'scene0664_02', 'scene0665_00', 'scene0665_01', 'scene0670_00', 'scene0670_01', 'scene0671_00', 'scene0671_01', 'scene0678_00', 'scene0678_01', 'scene0678_02', 'scene0684_00', 'scene0684_01', 'scene0685_00', 'scene0685_01', 'scene0685_02', 'scene0686_00', 'scene0686_01', 'scene0686_02', 'scene0689_00', 'scene0690_00', 'scene0690_01', 'scene0693_00', 'scene0693_01', 'scene0693_02', 'scene0695_00', 'scene0695_01', 'scene0695_02', 'scene0695_03', 'scene0696_00', 'scene0696_01', 'scene0696_02', 'scene0697_00', 'scene0697_01', 'scene0697_02', 'scene0697_03', 'scene0699_00', 'scene0700_00', 'scene0700_01', 'scene0700_02', 'scene0701_00', 'scene0701_01', 'scene0701_02', 'scene0702_00', 'scene0702_01', 'scene0702_02', 'scene0704_00', 'scene0704_01']
     # scenes = sorted([s for s in scenes if s.endswith("_00")])[70:80]
-    scenes = ['scene0435_00']
-    print("Number of scenes:", len(scenes))
+    # scenes = ['scene0435_00']
+    stage_1_results_dir = cfg.stage_1_results_dir
+    scenes = sorted([f[:-4] for f in os.listdir(stage_1_results_dir) if f.endswith('00.pth')])
+    # scenes = ['scene0353_00']
+    # print("Number of scenes:", len(scenes))
     
     groundingdino_model, sam_predictor = load_grounded_sam()
     clip_model = load_clip_model(clip_size)
     
-    for scene_id in tqdm(scenes):
-        print("Working on ", scene_id)
+    # print(colored(f"------------Working on class: {text_prompt}-----------", "yellow", attrs=["bold"]))
+    for scene_id in tqdm(scenes, desc=f"2D Segmenting selected scenes", leave=False):
+        if scene_checkpoint.get(scene_id, False):
+            continue
+        # if os.path.exists(os.path.join(mask_2d_dir, text_prompt, f"{scene_id}.pth")):
+        #     print(f"Segmentation 2D for {scene_id} already done, skipping.")
+        #     # continue
+        print(f"Working on {scene_id}", "with text prompt:", text_prompt)
         image_dir = os.path.join(scene_2d_dir, scene_id, "color")
         image_files = [f for f in os.listdir(image_dir) if f.endswith(".jpg")]
         image_files.sort(
             key=lambda x: int(x.split(".")[0])
         )  # sort numerically, 1.jpg, 2.jpg, 3.jpg ...
         downsampled_image_files = image_files[::cfg.downsample_ratio]  # get one image every 10 frames
-        print(f"Number of downsampled_images:{len(downsampled_image_files)}")
+        # print(f"Number of downsampled_images:{len(downsampled_image_files)}")
         downsampled_images_paths = [
             os.path.join(image_dir, f) for f in downsampled_image_files
         ]
 
-        
         with torch.cuda.amp.autocast():
             grounded_sam_results = inference_grounded_sam(
                 groundingdino_model,
@@ -454,7 +495,13 @@ if __name__ == "__main__":
             )
             os.makedirs(os.path.join(mask_2d_dir, text_prompt), exist_ok=True)
             mask_2d_path = os.path.join(mask_2d_dir, text_prompt, f"{scene_id}.pth")
+            
+            # convert all masks to rle encoding
+            grounded_sam_results = encode_2d_masks(grounded_sam_results)
+             
             torch.save(
                 grounded_sam_results, mask_2d_path
             )  # save all segmented frame masks in a file
             torch.cuda.empty_cache()
+        scene_checkpoint[scene_id] = True
+        write_scene_checkpoint(text_prompt, scene_checkpoint)

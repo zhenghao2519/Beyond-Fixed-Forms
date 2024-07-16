@@ -830,7 +830,7 @@ INSTANCE_CAT_SCANNET_200 = [
     "mattress",
 ]
 
-HEAD_CATS_SCANNET_200 = [
+HEAD_CATS_SCANNET_200 = [ # wall and floor removed
     "tv stand",
     "curtain",
     "blinds",
@@ -872,7 +872,6 @@ HEAD_CATS_SCANNET_200 = [
     "window",
     "file cabinet",
     "chair",
-    "wall",
     "plant",
     "coffee table",
     "stairs",
@@ -890,7 +889,6 @@ HEAD_CATS_SCANNET_200 = [
     "clothes",
     "whiteboard",
     "bed",
-    "floor",
     "bathtub",
     "desk",
     "wardrobe",

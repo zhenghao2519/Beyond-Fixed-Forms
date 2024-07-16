@@ -1,0 +1,115 @@
+# paths
+must_match_base_prompt: False
+must_match_class: "hair dryer"
+base_prompt: "table" # It is square and made of mahogany.
+# base_prompt: "coffee table"
+scene_id: "scene0011_00"
+
+# root_dir: "data/Scannet200/Scannet200_2D_5interval/val"
+root_dir: "./data/Scannet200/"
+# scene_pcd_path: "/home/jie_zhenghao/Open3DIS/data/Scannet200/Scannet200_3D/val/original_ply_files/scene0435_00.ply"
+# scene_pcd_path: "data/Scannet200/Scannet200_3D/val/original_npy_files/scene0435_00.npy"
+scene_npy_dir: "./data/Scannet200/Scannet200_3D/original_npy_files"
+
+# cam_pose_dir: "data/Scannet200/Scannet200_2D_5interval/val/scene0435_00/pose/"
+# depth_im_dir: "data/Scannet200/Scannet200_2D_5interval/val/scene0435_00/depth/"
+scene_2d_dir: "./data/Scannet200/Scannet200_2D"
+
+mask_2d_dir: "./output/mask_2d/rle"
+mask_3d_dir: "./output/mask_3d"
+mask_3d_dir_before_aggregate: "./output/mask_3d_before_aggregate"
+
+# rgb photo resolution
+width_2d: 1296
+height_2d: 968
+
+# frames downsample ratio
+downsample_ratio: 10 # pick 1 frame every `downsample_ratio` frames
+
+# grounding dino
+ckpt_repo_id: "ShilongLiu/GroundingDINO"
+ckpt_filename: "groundingdino_swinb_cogcoor.pth"
+ckpt_config_filename: "GroundingDINO_SwinB.cfg.py"
+dino_box_threshold: 0.35
+dino_text_threshold: 0.35
+
+# dino bbox filtering using CLIP
+filter_with_CLIP_feature: True
+descriptor_generator: "waffle"
+waffle_word_list_path: "./tools/waffle_word_list.pkl"
+CLIP_model_size: "ViT-L/14" # 'ViT-L/14'
+similarity_threshold: 0.15
+
+# sam
+# sam_checkpoint: "pretrained/sam_vit_h_4b8939.pth"
+sam_checkpoint: "/home/jie_zhenghao/Beyond-Fixed-Forms/pretrained/sam_vit_h_4b8939.pth"
+sam_url: "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth"
+
+# Aggregate
+iou_thres: 0.2
+similarity_thres: 0.75
+min_aggragated_masks: 2
+# Filtering
+if_occurance_threshold: False
+occurance_threshold: 0.3 # points with occurance under lowest `occurance_threshold`% will be filtered out
+
+if_detected_ratio_threshold: True
+detected_ratio_threshold: 0.38 # 0.1/ 0.2 /0.3/ 0.4 # points with detected ratio under lowest `detected_ratio_threshold`% will be filtered out
+
+remove_filtered_masks: 0.4 # remove masks containing less than `remove_filtered_masks` percent points after filtering
+remove_small_masks: 10 # 3d masks with less than `remove_small_masks` points will be removed
+
+# Final Refinement of stage 1/2
+stage_1_results_dir: "exp_stage_1/Result_OpenVocab_ISBNet-GSAM/final_result_hier_agglo/"
+
+stage1_iou_thres: 0.45 # cause no NMS in stage 1 for Open3DIS, we consider masks with iou > `stage1_iou_thres` as the same object
+
+refinment_sim_thres: 0.65 #0.71
+refinment_sim_percentile: 0 # 0.75
+refiment_iou_thres: 0.45
+
+final_output_dir: "output/final_output"
+
+
+
+# table (large) in 0011:
+# can't solve through set iou in refinement, Open3dis has both good and fractured table results -> strong dependence on stage 1 result
+# table fractured -> not merged well-enugh to one mask
+# similar obect recognized as table (exists FP) -> similar stuff hard to filter
+# also the fracture of table coincides with the light-shadow change on the table -> dino detects edges?
+
+# bed in 0046:
+# towel recognized as bed -> increase similarity threshold to **0.22** filtered towel
+# chair recognized as bed -> increased detected ratio thres to **0.38** filtered out chair, slightly improve comfortable on 0435
+
+# snacks in 0019:
+# more accurate than openYOLO3D, but still not perfect
+
+# desk in 0025:
+# doesn't shadow objects on it, but falsely recognize file cabinet as desk 
+# -> increase detect retio thres to **0.40** -> doesn't change much yet bed in 0046 and comfortable in 0435 worse
+
+#SHADOWED OBJECT
+
+
+#PART OF OBJECT
+
+#ADJECTIVE
+# chill/ focus on 0030
+# clean/ dirty / purchase on 0678
+
+# coffetable in 0178
+# cook/ vacuum in 0207
+# mucle gaine/edible/clothes/supplement in 0222-----good
+# water pip / energy consuming in 0307-----ok ish
+# picure in 0329 ----bad  steve jobs 2d mask 2, 3d mask 0 
+# heat in 0073
+# tape/yoyo / chinese / book in 0700
+# round in 0701
+# green chair in 0378
+# sanke in 0697
+# sticker/ photos/ fanta in 0695
+# warning in 0686
+# pingpong table in 0647
+# baby/ picture in 0633
+# colorful/ fresh air in 0616

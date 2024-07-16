@@ -491,10 +491,19 @@ class VisualizationScannet200:
                 continue
             tt_col[np.where(ins_label==n_label[i])] = pallete[i]
             if specific: # be more specific
-                print("Running ins mask", i, "with label", [sem_label[np.where(ins_label==n_label[i])][0]], CLASS_LABELS_200[ BENCHMARK_SEMANTIC_IDXS.index(sem_label[np.where(ins_label==n_label[i])][0])])
-                tt_col_specific = self.color.copy()
-                tt_col_specific[np.where(ins_label==n_label[i])] = pallete[i]
-                self.vis.add_points(f'GT instance: ' + str(i) + '_' + CLASS_LABELS_200[ BENCHMARK_SEMANTIC_IDXS.index(sem_label[np.where(ins_label==n_label[i])][0])], self.point, tt_col_specific, point_size=20, visible=True)
+                sem_class_idx = sem_label[np.where(ins_label == n_label[i])][0]
+                if sem_class_idx < len(CLASS_LABELS_200):
+                    class_name = CLASS_LABELS_200[sem_class_idx]
+                    print("Running ins mask", i, "with label", [sem_class_idx], class_name)
+                    tt_col_specific = self.color.copy()
+                    tt_col_specific[np.where(ins_label == n_label[i])] = pallete[i]
+                    self.vis.add_points(f'GT instance: ' + str(i) + '_' + class_name, self.point, tt_col_specific, point_size=20, visible=True)
+                else:
+                    print(f"Class index {sem_class_idx} is out of bounds for CLASS_LABELS_200")
+                # print("Running ins mask", i, "with label", [sem_label[np.where(ins_label==n_label[i])][0]], CLASS_LABELS_200[ BENCHMARK_SEMANTIC_IDXS.index(sem_label[np.where(ins_label==n_label[i])][0])])
+                # tt_col_specific = self.color.copy()
+                # tt_col_specific[np.where(ins_label==n_label[i])] = pallete[i]
+                # self.vis.add_points(f'GT instance: ' + str(i) + '_' + CLASS_LABELS_200[ BENCHMARK_SEMANTIC_IDXS.index(sem_label[np.where(ins_label==n_label[i])][0])], self.point, tt_col_specific, point_size=20, visible=True)
 
         self.vis.add_points(f'GT instance: ' + str(i), self.point, tt_col, point_size=20, visible=True)
         print('---Done---')
@@ -551,7 +560,7 @@ class VisualizationScannet200:
             label = dic['final_class']
         pallete =  generate_palette(int(2e3 + 1))
         tt_col = self.color.copy()
-        limit = 50
+        limit = 20
         for i in range(0, instance.shape[0]):
             # print('DEBUG   '+str(instance.shape) + str(len(pallete)) + str(len(tt_col)))
             tt_col[instance[i] == 1] = pallete[i]
@@ -634,6 +643,8 @@ class VisualizationScannet200:
 def get_parser():
     parser = argparse.ArgumentParser(description="Configuration Open3DIS")
     parser.add_argument("--config",type=str,required = True,help="Config")
+    parser.add_argument("--cls",type=str,required = False,help="Class")
+    parser.add_argument("--scene",type=str,required = False,help="Scene")
     return parser
 
 
@@ -653,7 +664,10 @@ if __name__ == "__main__":
     cfg = Munch.fromDict(yaml.safe_load(open(args.config, "r").read()))
     
     # Scene ID to visualize
-    scene_id = 'scene0435_00'
+    # scene_id = 'scene0011_00'
+    scene_id = args.scene
+    # base_prompt = 'table'
+    base_prompt = args.cls
 
     ##### The format follows the dataset tree
     ## 1
@@ -661,22 +675,22 @@ if __name__ == "__main__":
     spp_path = './data/Scannet200/Scannet200_3D/val/superpoints/' + scene_id + '.pth'
     ## 2
     check_gtviz = True
-    gt_path = './data/Scannet200/Scannet200_3D/val/groundtruth/' + scene_id + '.pth'
+    gt_path = './data/Scannet200/Scannet200_3D/groundtruth/' + scene_id + '.pth'
     ## 3
     check_3dviz = False
     mask3d_path = './data/Scannet200/Scannet200_3D/val/isbnet_clsagnostic_scannet200/' + scene_id + '.pth'
     ## 4
     check_2dviz = False
     mask2d_path = '../exp/version_sam/hier_agglo/' + scene_id + '.pth'
-    ## 5 Visualize final mask of stage 1
-    check_finalviz = False
-    agnostic_path = os.path.join(cfg.stage_1_result_dir, scene_id + '.pth')
+    ## 5 Visualize final mask of stage 1 (Open3DIS results)
+    check_finalviz = True
+    agnostic_path = os.path.join(cfg.stage_1_results_dir, scene_id + '.pth')
     ## 6 Visualize final mask of stage 2 in each class
     check_singleviz = True
-    output_dir = os.path.join(cfg.mask_3d_dir, cfg.base_prompt)
+    output_dir = os.path.join(cfg.mask_3d_dir, base_prompt)
     ## 7 Visualize final refined masks
     check_refinedviz = True
-    refined_path = os.path.join(cfg.final_output_dir, cfg.base_prompt, scene_id + '.pth')
+    refined_path = os.path.join(cfg.final_output_dir, base_prompt, scene_id + '.pth')
     # agnostic_path = './data/Scannet200/Scannet200_3D/val/single_object_test/' + scene_id + '.pth'
 
     pyviz3d_dir = '../viz' # visualization directory
@@ -692,15 +706,17 @@ if __name__ == "__main__":
     if check_superpointviz:
         VIZ.superpointviz(spp_path)
     if check_gtviz:
-        VIZ.gtviz(gt_path, specific = True)
+        VIZ.gtviz(gt_path, specific = False)
     if check_3dviz:
         VIZ.vizmask3d(mask3d_path, specific = False)
     if check_2dviz:
         VIZ.vizmask2d(mask2d_path, specific = False)
     if check_finalviz:
-        VIZ.finalviz(agnostic_path, specific = True, vocab = True)
+        VIZ.finalviz(agnostic_path, specific = False, vocab = False)
     if check_singleviz:
         VIZ.singleviz(os.path.join(output_dir,scene_id + '.pth'), specific = True, vocab = False)
     if check_refinedviz:
         VIZ.refinedviz(refined_path, specific = True, vocab = True)
+
+
     VIZ.save(pyviz3d_dir)
