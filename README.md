@@ -1,5 +1,12 @@
-# beyond-fixed-forms
-Query-Aware Refinement for Open-Vocabulary 3D Instance Segmentation
+# Beyond-Fixed-Forms
+Query-Aware Refinement for Open-Vocabulary 3D Instance Segmentation (OV-3DIS)
+
+Existing OV-3DIS methods follow a 2-stage prediction-and-retrieval scheme:
+![Prediction and retrieval](assets/images/2_stage.png)
+Beyond-Fixed-Forms (BeyondFF) is a query-aware refinement process that can be applied to any off-the-shelf OV-3DIS method (e.g., Open3DIS) for more comprehensive and well-aligned results:
+![Qualitative results example](assets/images/Qualitative.png)
+It leverages the semantic information of text queries to rediscover objects from multi-view RGB-D images and refine fixed-shape 3D instance masks to desired forms in the second stage.
+![Overview of BeyondFF pipeline](assets/images/overview.png)
 
 ### Installation
 ```
