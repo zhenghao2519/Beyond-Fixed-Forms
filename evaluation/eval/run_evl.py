@@ -64,34 +64,34 @@ def process_class(class_name, config_path, checkpoint):
         else:
             return False
 
-    # if checkpoint.get(class_name, {}).get("projection_2d_to_3d", False):
-    #     print(colored(f"Projections 2D to 3D for {class_name} already done, skipping.", "yellow"))
-    # else:
-    #     if run_command(["python", "tools/projection_2d_to_3d.py", "--config", config_path, "--cls", class_name]):
-    #         checkpoint[class_name]["projection_2d_to_3d"] = True
-    #         write_checkpoint(checkpoint)
-    #         print(colored(f"Projection 2D to 3D for {class_name} done.", "green"))
-    #     else:
-    #         return False
+    if checkpoint.get(class_name, {}).get("projection_2d_to_3d", False):
+        print(colored(f"Projections 2D to 3D for {class_name} already done, skipping.", "yellow"))
+    else:
+        if run_command(["python", "tools/projection_2d_to_3d.py", "--config", config_path, "--cls", class_name]):
+            checkpoint[class_name]["projection_2d_to_3d"] = True
+            write_checkpoint(checkpoint)
+            print(colored(f"Projection 2D to 3D for {class_name} done.", "green"))
+        else:
+            return False
 
-    # if checkpoint.get(class_name, {}).get("refinement", False):
-    #     print(colored(f"Refinement for {class_name} already done, skipping.", "yellow"))
-    # else:
-    #     if run_command(["python", "tools/refinement.py", "--config", config_path, "--cls", class_name]):
-    #         checkpoint[class_name]["refinement"] = True
-    #         write_checkpoint(checkpoint)
-    #         print(colored(f"Refinements for {class_name} done.", "green"))
-    #     else:
-    #         return False
+    if checkpoint.get(class_name, {}).get("refinement", False):
+        print(colored(f"Refinement for {class_name} already done, skipping.", "yellow"))
+    else:
+        if run_command(["python", "tools/refinement.py", "--config", config_path, "--cls", class_name]):
+            checkpoint[class_name]["refinement"] = True
+            write_checkpoint(checkpoint)
+            print(colored(f"Refinements for {class_name} done.", "green"))
+        else:
+            return False
 
-    # if checkpoint.get(class_name, {}).get("evaluation", False):
-    #     print(colored(f"Evaluation for {class_name} already done, skipping.", "yellow"))
-    # else:
-    #     if run_command(["python", "evaluation/eval/eval_scannet200.py", "--cls", class_name]):
-    #         checkpoint[class_name]["evaluation"] = True
-    #         write_checkpoint(checkpoint)
-    #     else:
-    #         return False
+    if checkpoint.get(class_name, {}).get("evaluation", False):
+        print(colored(f"Evaluation for {class_name} already done, skipping.", "yellow"))
+    else:
+        if run_command(["python", "evaluation/eval/eval_scannet200.py", "--cls", class_name]):
+            checkpoint[class_name]["evaluation"] = True
+            write_checkpoint(checkpoint)
+        else:
+            return False
 
     return True
 
