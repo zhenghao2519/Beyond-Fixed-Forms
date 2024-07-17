@@ -64,12 +64,12 @@ def process_class(class_name, config_path, checkpoint):
     #     else:
     #         return False
 
-    if run_command(["python", "tools/projection_2d_to_3d.py", "--config", config_path, "--cls", class_name]):
-        checkpoint[class_name]["projection_2d_to_3d"] = True
-        write_checkpoint(checkpoint)
-        print(colored(f"Projection 2D to 3D for {class_name} done.", "green"))
-    else:
-        return False
+    # if run_command(["python", "tools/projection_2d_to_3d.py", "--config", config_path, "--cls", class_name]):
+    #     checkpoint[class_name]["projection_2d_to_3d"] = True
+    #     write_checkpoint(checkpoint)
+    #     print(colored(f"Projection 2D to 3D for {class_name} done.", "green"))
+    # else:
+    #     return False
 
     if run_command(["python", "tools/refinement.py", "--config", config_path, "--cls", class_name]):
         checkpoint[class_name]["refinement"] = True
@@ -91,7 +91,7 @@ if __name__ == "__main__":
     cfg = Munch.fromDict(yaml.safe_load(open(config_path, "r").read()))
     checkpoint = read_checkpoint()
 
-    classes_to_process = HEAD_CATS_SCANNET_200[30:40] + COMMON_CATS_SCANNET_200[30:30] + TAIL_CATS_SCANNET_200[50:50]
+    classes_to_process = HEAD_CATS_SCANNET_200[0:40] + COMMON_CATS_SCANNET_200[0:40] + TAIL_CATS_SCANNET_200[0:50]
     nan_classes = [  "bicycle", "machine",  "structure", "storage organizer", "potted plant", "cd case", "coat rack", "fire alarm", "power strip", "luggage"  ]
     # classes_to_process = ["clothes"]
     for class_name in tqdm(classes_to_process, desc="Processing classes"):

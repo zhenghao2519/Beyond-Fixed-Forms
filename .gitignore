@@ -8,8 +8,12 @@ debug.ipynb
 checkpoints/**
 third_party/**
 third_party/demo
-
+evaluation/eval_results/**
 /*.yaml
+process_checkpoints.txt
+script_log.txt
+script_log_fp.txt
+
 
 *.zip
 

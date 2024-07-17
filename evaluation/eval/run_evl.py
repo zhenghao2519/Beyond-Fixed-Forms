@@ -100,7 +100,7 @@ if __name__ == "__main__":
     cfg = Munch.fromDict(yaml.safe_load(open(config_path, "r").read()))
     checkpoint = read_checkpoint()
 
-    classes_to_process = HEAD_CATS_SCANNET_200[:40] + COMMON_CATS_SCANNET_200[:40] + TAIL_CATS_SCANNET_200[:40]
+    classes_to_process = HEAD_CATS_SCANNET_200[:50] + COMMON_CATS_SCANNET_200[:50] + TAIL_CATS_SCANNET_200[:50]
     # nan_classes = ["clothes dryer", "pipe", "column", "bulletin board", "potted plant","coat rack", "folded chair", "calendar", "poster" ,"soap dispenser", "keyboard piano", "shower head", "guitar", "fire extinguisher", "tissue box", "scale", "soap dish", "tube", "plunger", "paper cutter", "storage container", "candle",  "music stand"   ]
     nan_classes = [  "bicycle", "machine",  "structure", "storage organizer", "potted plant", "cd case", "coat rack", "fire alarm", "power strip", "luggage"  ]
     # classes_to_process = ["clothes"]

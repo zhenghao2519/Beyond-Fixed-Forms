@@ -35,18 +35,18 @@ plant,0.0,0.0,0.0,0.0,0.0,0.0
 ceiling,0.0,0.0,0.0,0.0,0.0,0.0
 bathtub,0.0,0.0,0.0,0.0,0.0,0.0
 end table,0.0,0.0,0.0,0.0,0.0,0.0
-dining table,0.0,0.0,0.0,0.0,0.0,0.0
+dining table,nan,nan,nan,nan,nan,nan
 keyboard,0.0,0.0,0.0,0.0,0.0,0.0
 bag,0.0,0.0,0.0,0.0,0.0,0.0
 backpack,0.0,0.0,0.0,0.0,0.0,0.0
 toilet paper,0.0,0.0,0.0,0.0,0.0,0.0
 printer,0.0,0.0,0.0,0.0,0.0,0.0
-tv stand,0.0,0.0,0.0,0.0,0.0,0.0
+tv stand,nan,nan,nan,nan,nan,nan
 whiteboard,0.0,0.0,0.0,0.0,0.0,0.0
 blanket,0.0,0.0,0.0,0.0,0.0,0.0
 shower curtain,0.0,0.0,0.0,0.0,0.0,0.0
 trash can,0.0,0.0,0.0,0.0,0.0,0.0
-closet,0.0,0.0,0.0,0.0,0.0,0.0
+closet,nan,nan,nan,nan,nan,nan
 stairs,0.0,0.0,0.0,0.0,0.0,0.0
 microwave,0.0,0.0,0.0,0.0,0.0,0.0
 stove,0.0,0.0,0.0,0.0,0.0,0.0
@@ -62,7 +62,7 @@ mirror,0.0,0.0,0.0,0.0,0.0,0.0
 copier,0.0,0.0,0.0,0.0,0.0,0.0
 basket,nan,nan,nan,nan,nan,nan
 sofa chair,0.0,0.0,0.0,0.0,0.0,0.0
-file cabinet,0.37277159630840323,0.38625144175317183,0.38676340101257894,0.738562091503268,0.7647058823529411,0.7647058823529411
+file cabinet,0.0,0.0,0.0,0.0,0.0,0.0
 fan,0.0,0.0,0.0,0.0,0.0,0.0
 laptop,0.0,0.0,0.0,0.0,0.0,0.0
 shower,0.0,0.0,0.0,0.0,0.0,0.0
@@ -79,7 +79,7 @@ suitcase,0.0,0.0,0.0,0.0,0.0,0.0
 rail,0.0,0.0,0.0,0.0,0.0,0.0
 radiator,0.0,0.0,0.0,0.0,0.0,0.0
 recycling bin,0.0,0.0,0.0,0.0,0.0,0.0
-container,0.0,0.0,0.0,0.0,0.0,0.0
+container,nan,nan,nan,nan,nan,nan
 wardrobe,0.0,0.0,0.0,0.0,0.0,0.0
 soap dispenser,0.0,0.0,0.0,0.0,0.0,0.0
 telephone,0.0,0.0,0.0,0.0,0.0,0.0
@@ -90,18 +90,18 @@ light,0.0,0.0,0.0,0.0,0.0,0.0
 laundry basket,0.0,0.0,0.0,0.0,0.0,0.0
 pipe,0.0,0.0,0.0,0.0,0.0,0.0
 clothes dryer,0.0,0.0,0.0,0.0,0.0,0.0
-guitar,0.0,0.0,0.0,0.0,0.0,0.0
+guitar,nan,nan,nan,nan,nan,nan
 toilet paper holder,0.0,0.0,0.0,0.0,0.0,0.0
 seat,0.0,0.0,0.0,0.0,0.0,0.0
 speaker,nan,nan,nan,nan,nan,nan
-column,0.0,0.0,0.0,0.0,0.0,0.0
+column,nan,nan,nan,nan,nan,nan
 bicycle,nan,nan,nan,nan,nan,nan
 ladder,0.0,0.0,0.0,0.0,0.0,0.0
 bathroom stall,0.0,0.0,0.0,0.0,0.0,0.0
 shower wall,0.0,0.0,0.0,0.0,0.0,0.0
 cup,0.0,0.0,0.0,0.0,0.0,0.0
 jacket,0.0,0.0,0.0,0.0,0.0,0.0
-storage bin,0.0,0.0,0.0,0.0,0.0,0.0
+storage bin,nan,nan,nan,nan,nan,nan
 coffee maker,0.0,0.0,0.0,0.0,0.0,0.0
 dishwasher,0.0,0.0,0.0,0.0,0.0,0.0
 paper towel roll,0.0,0.0,0.0,0.0,0.0,0.0
@@ -119,16 +119,16 @@ doorframe,0.0,0.0,0.0,0.0,0.0,0.0
 toilet paper dispenser,0.0,0.0,0.0,0.0,0.0,0.0
 mini fridge,0.0,0.0,0.0,0.0,0.0,0.0
 fire extinguisher,0.0,0.0,0.0,0.0,0.0,0.0
-ball,0.0,0.0,0.0,0.0,0.0,0.0
-hat,0.0,0.0,0.0,0.0,0.0,0.0
+ball,nan,nan,nan,nan,nan,nan
+hat,nan,nan,nan,nan,nan,nan
 shower curtain rod,0.0,0.0,0.0,0.0,0.0,0.0
-water cooler,0.0,0.0,0.0,0.0,0.0,0.0
+water cooler,nan,nan,nan,nan,nan,nan
 paper cutter,0.0,0.0,0.0,0.0,0.0,0.0
 tray,0.0,0.0,0.0,0.0,0.0,0.0
 shower door,0.0,0.0,0.0,0.0,0.0,0.0
 pillar,0.0,0.0,0.0,0.0,0.0,0.0
 ledge,0.0,0.0,0.0,0.0,0.0,0.0
-toaster oven,0.0,0.0,0.0,0.0,0.0,0.0
+toaster oven,nan,nan,nan,nan,nan,nan
 mouse,nan,nan,nan,nan,nan,nan
 toilet seat cover dispenser,0.0,0.0,0.0,0.0,0.0,0.0
 furniture,0.0,0.0,0.0,0.0,0.0,0.0
@@ -141,7 +141,7 @@ crate,0.0,0.0,0.0,0.0,0.0,0.0
 power outlet,0.0,0.0,0.0,0.0,0.0,0.0
 decoration,0.0,0.0,0.0,0.0,0.0,0.0
 sign,0.0,0.0,0.0,0.0,0.0,0.0
-projector,0.0,0.0,0.0,0.0,0.0,0.0
+projector,nan,nan,nan,nan,nan,nan
 closet door,0.0,0.0,0.0,0.0,0.0,0.0
 vacuum cleaner,0.0,0.0,0.0,0.0,0.0,0.0
 candle,nan,nan,nan,nan,nan,nan
@@ -153,12 +153,12 @@ broom,0.0,0.0,0.0,0.0,0.0,0.0
 guitar case,nan,nan,nan,nan,nan,nan
 range hood,0.0,0.0,0.0,0.0,0.0,0.0
 dustpan,0.0,0.0,0.0,0.0,0.0,0.0
-hair dryer,0.0,0.0,0.0,0.0,0.0,0.0
+hair dryer,nan,nan,nan,nan,nan,nan
 water bottle,0.0,0.0,0.0,0.0,0.0,0.0
 handicap bar,nan,nan,nan,nan,nan,nan
 purse,nan,nan,nan,nan,nan,nan
 vent,nan,nan,nan,nan,nan,nan
-shower floor,0.0,0.0,0.0,0.0,0.0,0.0
+shower floor,nan,nan,nan,nan,nan,nan
 water pitcher,0.0,0.0,0.0,0.0,0.0,0.0
 mailbox,0.0,0.0,0.0,0.0,0.0,0.0
 bowl,0.0,0.0,0.0,0.0,0.0,0.0
@@ -184,7 +184,7 @@ cd case,nan,nan,nan,nan,nan,nan
 closet rod,0.0,0.0,0.0,0.0,0.0,0.0
 coffee kettle,0.0,0.0,0.0,0.0,0.0,0.0
 structure,nan,nan,nan,nan,nan,nan
-shower head,0.0,0.0,0.0,0.0,0.0,0.0
+shower head,nan,nan,nan,nan,nan,nan
 keyboard piano,0.0,0.0,0.0,0.0,0.0,0.0
 case of water bottles,0.0,0.0,0.0,0.0,0.0,0.0
 coat rack,nan,nan,nan,nan,nan,nan
@@ -198,4 +198,4 @@ potted plant,nan,nan,nan,nan,nan,nan
 luggage,nan,nan,nan,nan,nan,nan
 mattress,0.0,0.0,0.0,0.0,0.0,0.0
 all_ap, all_ap50, all_ap25, all_rc, all_rc50, all_rc25
-0.00213012340747659,0.0022071510957324104,0.002210076577214737,0.004220354808590103,0.004369747899159664,0.004369747899159664
+0.0,0.0,0.0,0.0,0.0,0.0

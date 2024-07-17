@@ -82,6 +82,8 @@ bucket:
   projection_2d_to_3d: true
   refinement: true
   segmentation_2d: true
+bulletin board:
+  segmentation_2d: true
 candle:
   evaluation: true
   projection_2d_to_3d: true
@@ -91,6 +93,8 @@ ceiling:
   evaluation: true
   projection_2d_to_3d: true
   refinement: true
+  segmentation_2d: true
+chair:
   segmentation_2d: true
 clock:
   evaluation: true
@@ -111,6 +115,10 @@ clothes:
   evaluation: false
   projection_2d_to_3d: false
   refinement: false
+  segmentation_2d: true
+coffee maker:
+  segmentation_2d: true
+column:
   segmentation_2d: true
 computer tower:
   evaluation: true
@@ -159,6 +167,8 @@ dining table:
   projection_2d_to_3d: true
   refinement: true
   segmentation_2d: true
+dishwasher:
+  segmentation_2d: true
 doorframe:
   evaluation: true
   projection_2d_to_3d: true
@@ -190,6 +200,10 @@ fire extinguisher:
   evaluation: true
   projection_2d_to_3d: true
   refinement: true
+  segmentation_2d: true
+fireplace:
+  segmentation_2d: true
+furniture:
   segmentation_2d: true
 guitar:
   evaluation: true
@@ -226,6 +240,8 @@ ironing board:
   projection_2d_to_3d: true
   refinement: true
   segmentation_2d: true
+jacket:
+  segmentation_2d: true
 keyboard:
   evaluation: true
   projection_2d_to_3d: true
@@ -240,6 +256,8 @@ kitchen counter:
   evaluation: true
   projection_2d_to_3d: true
   refinement: true
+  segmentation_2d: true
+ladder:
   segmentation_2d: true
 lamp:
   evaluation: true
@@ -256,6 +274,8 @@ laundry basket:
   projection_2d_to_3d: true
   refinement: true
   segmentation_2d: true
+ledge:
+  segmentation_2d: true
 light:
   evaluation: true
   projection_2d_to_3d: true
@@ -271,10 +291,14 @@ mailbox:
   projection_2d_to_3d: true
   refinement: true
   segmentation_2d: true
+mat:
+  segmentation_2d: true
 microwave:
   evaluation: true
   projection_2d_to_3d: true
   refinement: true
+  segmentation_2d: true
+mini fridge:
   segmentation_2d: true
 monitor:
   evaluation: true
@@ -350,6 +374,8 @@ picture:
   evaluation: true
   projection_2d_to_3d: true
   refinement: true
+  segmentation_2d: true
+pillar:
   segmentation_2d: true
 pillow:
   evaluation: true
@@ -432,6 +458,8 @@ shower curtain rod:
   projection_2d_to_3d: true
   refinement: true
   segmentation_2d: true
+shower door:
+  segmentation_2d: true
 shower floor:
   evaluation: true
   projection_2d_to_3d: true
@@ -478,6 +506,8 @@ stand:
   refinement: true
   segmentation_2d: true
 stool:
+  segmentation_2d: true
+storage bin:
   segmentation_2d: true
 storage container:
   evaluation: true
@@ -579,10 +609,14 @@ water bottle:
   projection_2d_to_3d: true
   refinement: true
   segmentation_2d: true
+water cooler:
+  segmentation_2d: true
 water pitcher:
   evaluation: true
   projection_2d_to_3d: true
   refinement: true
   segmentation_2d: true
 window:
+  segmentation_2d: true
+windowsill:
   segmentation_2d: true
