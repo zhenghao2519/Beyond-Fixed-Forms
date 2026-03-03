@@ -1,5 +1,5 @@
 <div  align="center">
-<h2> Beyond Fixed Forms: Query-Aware Refinement for Open-Vocabulary 3D Instance Segmentation </h2>
+<h3> Beyond Fixed Forms: Query-Aware Refinement for Open-Vocabulary 3D Instance Segmentation </h3>
             
 <a href="assets/paper/beyond_fixed_forms.pdf"><img src='https://img.shields.io/badge/Report-red' alt='Report'></a>
 <a href="assets/poster/poster.pdf"><img src='https://img.shields.io/badge/Poster-green' alt='Poster'></a>
